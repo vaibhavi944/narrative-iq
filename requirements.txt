@@ -1,0 +1,14 @@
+streamlit
+langchain
+langgraph
+sentence-transformers
+transformers
+faiss-cpu
+nltk
+langdetect
+pandas
+numpy
+scikit-learn
+plotly
+python-dotenv
+datasets
