@@ -12,3 +12,8 @@ scikit-learn
 plotly
 python-dotenv
 datasets
+groq
+langchain-groq
+spacy
+textblob
+huggingface-hub
