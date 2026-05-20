@@ -22,7 +22,7 @@ def score_paragraph(paragraph, language="english"):
     combined_score = (pacing_score * 0.4) + (repetition_score * 0.35) + (emotion_score * 0.25)
 
     # Step 4 - Assign label based on combined score
-    if combined_score >= 0.65:
+    if combined_score >= 0.60:
         label = "Strong"
     elif combined_score >= 0.40:
         label = "Moderate"
@@ -35,7 +35,7 @@ def score_paragraph(paragraph, language="english"):
         reasons.append("Pacing is slow or monotonous")
     if repetition_score < 0.5:
         reasons.append("Too much repetition detected")
-    if emotion_score < 0.3:
+    if emotion_score < 0.2:
         reasons.append("Paragraph feels emotionally flat")
     
     if not reasons and label == "Strong":
