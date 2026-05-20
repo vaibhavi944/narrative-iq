@@ -4,7 +4,7 @@ from groq import Groq
 from dotenv import load_dotenv
 
 # Step 1: Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Step 2: Define output folder paths and create directories
 ENGLISH_DIR = "data/raw_stories/english"
@@ -101,6 +101,10 @@ def generate_marathi():
         
         count = 0
         for i in range(30):
+            filename = os.path.join(MARATHI_DIR, f"story_{i+1:03d}.txt")
+            if os.path.exists(filename):
+                continue
+                
             prompt = (
                 "Write a short Marathi story with exactly 3 paragraphs about daily life in Maharashtra.\n"
                 "Each paragraph should be 3-5 sentences long.\n"
@@ -112,14 +116,13 @@ def generate_marathi():
                 "No title. No explanation."
             )
             
-            # Using llama-3.3-70b-versatile as llama3-8b-8192 is deprecated
+            # Using llama-3.1-8b-instant to bypass rate limits on larger models
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}]
             )
             
             content = completion.choices[0].message.content.strip()
-            filename = os.path.join(MARATHI_DIR, f"story_{i+1:03d}.txt")
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(content)
             
