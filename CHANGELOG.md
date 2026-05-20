@@ -36,8 +36,9 @@ This file tracks the engineering decisions, architectural changes, and implement
 - **Approach:** Refactored for scalability using Groq `llama-3.3-70b-versatile`.
     - **Batching:** Processes 10 chunks per API call to reduce latency and overhead.
     - **Safety:** Implemented 1s rate-limit delay and incremental progress saving to `data/processed/`.
-    - **Robustness:** Added safe markdown cleanup and fallback metadata defaults.
-- **Status:** Verified with a 20-chunk batch test (Genres: 7 slice_of_life, 13 fantasy).
+    - **Robustness:** Added safe markdown cleanup, robust JSON array parsing (handling dict-to-list conversion), and fallback metadata defaults.
+    - **Fix:** Resolved a `NameError` in the test block caused by incorrect indentation of samples display logic.
+- **Status:** Verified with a 15-chunk multilingual batch test (Genres: 10 slice_of_life, 2 fantasy, 3 drama).
 
 
 ### 5. Multi-Paragraph Story Format
