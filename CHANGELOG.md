@@ -46,9 +46,11 @@ This file tracks the engineering decisions, architectural changes, and implement
 - **Approach:** 
     - **Model:** Used `intfloat/multilingual-e5-base` from `sentence-transformers`.
     - **Formatting:** Applied "passage: " prefix required for E5 asymmetric retrieval.
-    - **Optimization:** Global model loading and batch processing (batch_size=32).
+    - **Optimization:** Global model loading and manual batch processing (batch_size=32).
+    - **Resilience:** Implemented isolated batch-level exception handling to prevent entire pipeline failure on single-batch errors.
+    - **Tracking:** Added `embedding_status` metadata and detailed success/failure statistics.
     - **Persistence:** Results stored as a pickle file (`.pkl`) to preserve numpy arrays and metadata.
-- **Status:** Completed. Verified with 20-chunk test run (768-dimensional embeddings).
+- **Status:** Completed. Refactored for production safety and verified with a 20-chunk resilient test run.
 
 
 ### 7. Multi-Paragraph Story Format
