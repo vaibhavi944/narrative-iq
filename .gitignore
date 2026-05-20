@@ -4,6 +4,7 @@ __pycache__/
 .vscode/
 .idea/
 PROJECT_EXPLANATION.md
+PROJECT_LOG.txt
 data/processed/
 data/cleaned/
 *.faiss
