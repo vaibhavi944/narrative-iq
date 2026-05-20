@@ -21,7 +21,7 @@ def get_repetition_score(paragraph, language="english"):
     if language.lower() == "english":
         sentences = nltk.sent_tokenize(paragraph)
     elif language.lower() in ["hindi", "marathi"]:
-        sentences = re.split(r'[।?!]', paragraph)
+        sentences = re.split(r'[।?!.]', paragraph)
     else:
         sentences = paragraph.split('.')
     

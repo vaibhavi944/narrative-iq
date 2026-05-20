@@ -18,7 +18,7 @@ def get_pacing_score(paragraph, language="english"):
         sentences = nltk.sent_tokenize(paragraph)
     # Handle Hindi and Marathi using regex for traditional punctuation (। ? !)
     elif language.lower() in ["hindi", "marathi"]:
-        sentences = re.split(r'[।?!]', paragraph)
+        sentences = re.split(r'[।?!.]', paragraph)
     # Basic fallback split
     else:
         sentences = paragraph.split('.')
