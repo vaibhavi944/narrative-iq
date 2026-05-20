@@ -5,55 +5,67 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 # Step 1: Initialize the multilingual E5 model
-# We load it globally to ensure it's only loaded into memory once.
-# Model 'intfloat/multilingual-e5-base' is excellent for English, Hindi, and Marathi.
 MODEL_NAME = "intfloat/multilingual-e5-base"
 print(f"Loading embedding model: {MODEL_NAME}...")
 model = SentenceTransformer(MODEL_NAME)
 
 def embed_chunks(chunks, batch_size=32):
     """
-    Converts chunk text into semantic vector embeddings.
-    Metadata is preserved, and embeddings are added as numpy arrays.
+    Converts chunk text into semantic vector embeddings using manual batching
+    and isolated exception handling for resilience.
     """
     embedded_chunks = []
-    texts_to_embed = []
+    success_count = 0
+    fail_count = 0
+    total_chunks = len(chunks)
     
-    # Step 2: Prepare texts with E5 specific prefix
-    # E5 models require "passage: " prefix for asymmetric retrieval tasks.
-    for chunk in chunks:
-        texts_to_embed.append(f"passage: {chunk['text']}")
+    print(f"Generating embeddings for {total_chunks} chunks in batches of {batch_size}...")
     
-    print(f"Generating embeddings for {len(chunks)} chunks...")
-    
-    try:
-        # Step 3: Compute embeddings in batches for efficiency
-        # batch_size=32 is a good balance for CPU/GPU memory.
-        embeddings = model.encode(
-            texts_to_embed, 
-            batch_size=batch_size, 
-            show_progress_bar=True,
-            convert_to_numpy=True
-        )
+    # Step 2: Manual batching using range
+    for i in range(0, total_chunks, batch_size):
+        batch = chunks[i:i + batch_size]
+        batch_end = min(i + batch_size, total_chunks)
         
-        # Step 4: Map embeddings back to their respective chunks
-        for i, chunk in enumerate(chunks):
-            # We create a copy to avoid mutating the input list if needed,
-            # though here we are adding a new key 'embedding'.
-            new_chunk = chunk.copy()
-            new_chunk["embedding"] = embeddings[i]
-            embedded_chunks.append(new_chunk)
+        # Prepare texts with E5 specific prefix "passage: "
+        batch_texts = [f"passage: {chunk['text']}" for chunk in batch]
+        
+        try:
+            # Step 3: Compute embeddings for the isolated batch
+            # We disable the built-in progress bar as we handle manual progress logging
+            batch_embeddings = model.encode(
+                batch_texts, 
+                batch_size=len(batch), 
+                show_progress_bar=False,
+                convert_to_numpy=True
+            )
             
-            # Step 5: Logging progress every 100 chunks
-            if (i + 1) % 100 == 0:
-                print(f"Processed {i + 1} embeddings...")
+            # Step 4: Map successful embeddings back to chunks
+            for idx, chunk in enumerate(batch):
+                new_chunk = chunk.copy()
+                new_chunk["embedding"] = batch_embeddings[idx]
+                new_chunk["embedding_status"] = "success"
+                embedded_chunks.append(new_chunk)
+                success_count += 1
                 
-    except Exception as e:
-        print(f"Critical error during embedding generation: {e}")
-        # In a real pipeline, you might want to handle partial failures differently,
-        # but here we skip the failed batch/operation.
-        return []
+        except Exception as e:
+            # Step 5: Isolated batch-level exception handling
+            print(f"Error processing batch {i} to {batch_end}: {e}")
+            for chunk in batch:
+                new_chunk = chunk.copy()
+                new_chunk["embedding"] = None
+                new_chunk["embedding_status"] = "failed"
+                embedded_chunks.append(new_chunk)
+                fail_count += 1
+                
+        # Logging progress every 100 chunks
+        if batch_end % 100 == 0 or batch_end == total_chunks:
+            print(f"Processed up to chunk {batch_end}/{total_chunks}...")
 
+    # Print final embedding statistics
+    print("\n--- Embedding Generation Stats ---")
+    print(f"Total Successful: {success_count}")
+    print(f"Total Failed: {fail_count}")
+    
     return embedded_chunks
 
 def save_embedded_chunks(embedded_chunks, output_path="data/processed/embedded_chunks.pkl"):
@@ -79,27 +91,24 @@ if __name__ == "__main__":
         with open(INPUT_PATH, "r", encoding="utf-8") as f:
             all_chunks = json.load(f)
         
-        # Step 7: Embed a subset for testing (first 20 chunks)
+        # Embed a subset for testing (first 20 chunks)
         test_limit = 20
         test_chunks = all_chunks[:test_limit]
         
-        print(f"Starting test embedding for {len(test_chunks)} chunks...")
+        print(f"Starting resilient embedding test for {len(test_chunks)} chunks...")
         results = embed_chunks(test_chunks)
         
         if results:
-            # Step 8: Verify results and print stats
-            total_created = len(results)
-            embedding_dim = results[0]["embedding"].shape[0]
+            # Verify results and print sample
+            # Find the first successful one for sample printing
+            success_sample = next((c for c in results if c["embedding_status"] == "success"), None)
             
-            print("\n--- Embedding Generation Summary ---")
-            print(f"Total embeddings created: {total_created}")
-            print(f"Embedding dimension: {embedding_dim}")
-            
-            # Sample output
-            sample = results[0]
-            print(f"\nSample Chunk ID: {sample['chunk_id']}")
-            print(f"Language: {sample['language']}")
-            print(f"First 5 embedding values: {sample['embedding'][:5]}")
+            if success_sample:
+                embedding_dim = success_sample["embedding"].shape[0]
+                print(f"Embedding dimension: {embedding_dim}")
+                print(f"\nSample Chunk ID: {success_sample['chunk_id']}")
+                print(f"Status: {success_sample['embedding_status']}")
+                print(f"First 5 embedding values: {success_sample['embedding'][:5]}")
             
             # Save results to disk
             save_embedded_chunks(results)
