@@ -36,38 +36,54 @@ def download_english():
     except Exception as e:
         print(f"Error downloading English stories: {e}")
 
-# Step 4: Download Hindi stories from hindi_discourse dataset
+# Step 4: Generate Hindi stories using Groq
 def download_hindi():
+    """
+    Replaced legacy midas/hindi_discourse dataset download with synthetic generation.
+    Legacy dataset scripts are often blocked or inconsistent. Synthetic generation 
+    provides higher quality, controlled length, and emotionally expressive narratives.
+    """
     try:
-        print("Loading Hindi Discourse dataset...")
-        # trust_remote_code=True is required by HuggingFace for datasets with custom loading scripts
-        dataset = load_dataset(
-            "midas/hindi_discourse", 
-            "default", 
-            split="train", 
-            trust_remote_code=True
-        )
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            print("GROQ_API_KEY not found in environment variables.")
+            return
+
+        client = Groq(api_key=api_key)
         
-        # Group sentences by Story_no
-        stories = {}
-        for row in dataset:
-            story_no = row["Story_no"]
-            sentence = row["Sentence"]
-            if story_no not in stories:
-                stories[story_no] = []
-            stories[story_no].append(sentence)
+        topics = [
+            "family conflict", "village life", "school memories", "festivals", 
+            "friendship", "emotional conversations", "suspense moments", 
+            "travel", "daily life", "rainy season"
+        ]
         
         count = 0
-        for story_no, sentences in stories.items():
-            content = " ".join(sentences)
-            filename = os.path.join(HINDI_DIR, f"story_{count+1:03d}.txt")
+        for i in range(50):
+            topic = topics[i % len(topics)]
+            prompt = (
+                f"Write a short story paragraph in Hindi (4-7 sentences) about {topic}.\n"
+                "Use natural Hindi script (Devanagari) in a narrative storytelling style.\n"
+                "The tone should be emotionally expressive.\n"
+                "Return only the paragraph. No title. No markdown. No explanations."
+            )
+            
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            content = completion.choices[0].message.content.strip()
+            filename = os.path.join(HINDI_DIR, f"story_{i+1:03d}.txt")
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(content)
-            count += 1
             
-        print(f"Total Hindi stories saved: {count}")
+            count += 1
+            if count % 10 == 0:
+                print(f"Generated {count} Hindi stories...")
+                
+        print(f"Total Hindi stories generated: {count}")
     except Exception as e:
-        print(f"Error downloading Hindi stories: {e}")
+        print(f"Error generating Hindi stories: {e}")
 
 # Step 5: Generate Marathi story paragraphs using Groq
 def generate_marathi():
