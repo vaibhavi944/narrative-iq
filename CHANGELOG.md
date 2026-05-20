@@ -40,8 +40,18 @@ This file tracks the engineering decisions, architectural changes, and implement
     - **Fix:** Resolved a `NameError` in the test block caused by incorrect indentation of samples display logic.
 - **Status:** Verified with a 15-chunk multilingual batch test (Genres: 10 slice_of_life, 2 fantasy, 3 drama).
 
+### 6. Semantic Embedding Pipeline (`src/rag/embeddings.py`)
+- **What:** Implemented a multilingual embedding generation system.
+- **Why:** To enable vector-based semantic search across English, Hindi, and Marathi stories.
+- **Approach:** 
+    - **Model:** Used `intfloat/multilingual-e5-base` from `sentence-transformers`.
+    - **Formatting:** Applied "passage: " prefix required for E5 asymmetric retrieval.
+    - **Optimization:** Global model loading and batch processing (batch_size=32).
+    - **Persistence:** Results stored as a pickle file (`.pkl`) to preserve numpy arrays and metadata.
+- **Status:** Completed. Verified with 20-chunk test run (768-dimensional embeddings).
 
-### 5. Multi-Paragraph Story Format
+
+### 7. Multi-Paragraph Story Format
 - **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
 - **Change:** Updated generation prompts to enforce exactly 3 paragraphs per story with blank line separators and dialogue.
 - **Status:** 
