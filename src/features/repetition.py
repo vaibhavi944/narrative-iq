@@ -43,7 +43,9 @@ def get_repetition_score(paragraph, language="english"):
     # Step 3 - Detect repeated words in full paragraph
     # Split full paragraph into words and lowercase
     all_words = re.findall(r'\w+', paragraph.lower())
-    
+    # Filter to remove single character words
+    all_words = [w for w in all_words if len(w) > 1]
+
     # Define stopwords for each language
     stopwords_map = {
         "english": ["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "is", "was", "it", "he", "she", "they", "his", "her", "that", "this", "as", "by"],
