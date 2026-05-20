@@ -70,6 +70,14 @@ No markdown."""
             
             batch_tags = json.loads(response_text)
             
+            # Ensure batch_tags is a list for index-based access
+            if not isinstance(batch_tags, list):
+                if isinstance(batch_tags, dict):
+                    # If it's a dict, try to convert values to a list if they look like the records
+                    batch_tags = list(batch_tags.values())
+                else:
+                    batch_tags = []
+
             # Step 4: Parse JSON response and add metadata
             for idx, chunk in enumerate(batch_copies):
                 # Fix 6: Fallback defaults
@@ -79,9 +87,10 @@ No markdown."""
                 
                 if idx < len(batch_tags):
                     tags = batch_tags[idx]
-                    genre = tags.get("genre", genre)
-                    scene_type = tags.get("scene_type", scene_type)
-                    dialogue_density = tags.get("dialogue_density", dialogue_density)
+                    if isinstance(tags, dict):
+                        genre = tags.get("genre", genre)
+                        scene_type = tags.get("scene_type", scene_type)
+                        dialogue_density = tags.get("dialogue_density", dialogue_density)
                 
                 chunk["genre"] = genre
                 chunk["scene_type"] = scene_type
@@ -119,9 +128,18 @@ if __name__ == "__main__":
     chunks = load_and_chunk_stories()
     
     # For testing, we process 20 chunks (2 batches)
-    test_limit = 20
-    print(f"Tagging {test_limit} chunks for testing...")
-    tagged = tag_chunks(chunks[:test_limit])
+    # Multilingual testing
+    english_test = [c for c in chunks if c["language"] == "english"][:5]
+    hindi_test = [c for c in chunks if c["language"] == "hindi"][:5]
+    marathi_test = [c for c in chunks if c["language"] == "marathi"][:5]
+
+    test_chunks = english_test + hindi_test + marathi_test
+
+    print(f"Tagging {len(test_chunks)} multilingual chunks for testing...")
+
+    tagged = tag_chunks(test_chunks)
+
+    
     
     # Statistical analysis
     genre_counts = {}
@@ -143,7 +161,20 @@ if __name__ == "__main__":
     for s, count in scene_counts.items():
         print(f" - {s}: {count}")
 
-    print("\nSample Tagged Chunks (Top 2):")
-    for chunk in tagged[:2]:
-        print(json.dumps(chunk, indent=2, ensure_ascii=False))
-        print("-" * 20)
+    print("\nEnglish Sample:")
+    for chunk in tagged:
+        if chunk["language"] == "english":
+            print(json.dumps(chunk, indent=2, ensure_ascii=False))
+            break
+
+    print("\nHindi Sample:")
+    for chunk in tagged:
+        if chunk["language"] == "hindi":
+            print(json.dumps(chunk, indent=2, ensure_ascii=False))
+            break
+
+    print("\nMarathi Sample:")
+    for chunk in tagged:
+        if chunk["language"] == "marathi":
+            print(json.dumps(chunk, indent=2, ensure_ascii=False))
+            break
