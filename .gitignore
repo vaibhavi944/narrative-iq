@@ -3,6 +3,7 @@ __pycache__/
 .env
 .vscode/
 .idea/
+PROJECT_EXPLANATION.md
 data/processed/
 data/cleaned/
 *.faiss
