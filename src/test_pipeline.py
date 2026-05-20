@@ -10,7 +10,9 @@ english_chapter = """He walked to the door. He opened the door. He looked outsid
 
 The long and winding road stretched out before them for miles and miles without any sign of a single resting place or a source of water to quench their growing thirst which was becoming unbearable in the heat of the afternoon sun that beat down upon them relentlessly. They continued walking slowly and methodically.
 
-The man sat on the chair. He looked at the wall. The wall was white. He waited for the clock to tick. It was three o'clock. Nothing happened."""
+The man sat on the chair. He looked at the wall. The wall was white. He waited for the clock to tick. It was three o'clock. Nothing happened.
+
+She turned slowly, her breath catching as the first light of dawn broke over the mountains. It was quiet — beautifully, achingly quiet. For the first time in years, she felt something loosen in her chest. She was free."""
 
 # Hindi chapter with intentional weaknesses (repeated starters 'वह', slow descriptive)
 hindi_chapter = """वह बाजार जा रही थी। वह सब्जी खरीदने वाली थी। वह बहुत धीरे चल रही थी क्योंकि उसके पैर में चोट लगी थी। बाजार बहुत दूर था।
