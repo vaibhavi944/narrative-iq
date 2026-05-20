@@ -18,8 +18,12 @@ def score_paragraph(paragraph, language="english"):
     emotion_score = emotion_result.get("emotion_score", 0.0)
 
     # Step 3 - Calculate weighted combined score
-    # Pacing: 0.4, Repetition: 0.35, Emotion: 0.25
-    combined_score = (pacing_score * 0.4) + (repetition_score * 0.35) + (emotion_score * 0.25)
+    # Hindi and Marathi literary prose naturally has higher emotional language
+    # so emotion weight is reduced to avoid over-scoring
+    if language.lower() in ["hindi", "marathi"]:
+        combined_score = (pacing_score * 0.45) + (repetition_score * 0.40) + (emotion_score * 0.15)
+    else:
+        combined_score = (pacing_score * 0.40) + (repetition_score * 0.35) + (emotion_score * 0.25)
 
     # Step 4 - Assign label based on combined score
     if combined_score >= 0.60:
