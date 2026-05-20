@@ -30,6 +30,16 @@ This file tracks the engineering decisions, architectural changes, and implement
 - **Approach:** Recursive file reading, double-newline splitting, and metadata enrichment (unique IDs, word counts, language tags).
 - **Status:** Completed.
 
+### 5. Metadata Tagging Pipeline (`src/ingestion/metadata_pipeline.py`)
+- **What:** Automated semantic tagging for genre, scene type, and dialogue density.
+- **Why:** To enable deep filtering and thematic analysis within the RAG system.
+- **Approach:** Refactored for scalability using Groq `llama-3.3-70b-versatile`.
+    - **Batching:** Processes 10 chunks per API call to reduce latency and overhead.
+    - **Safety:** Implemented 1s rate-limit delay and incremental progress saving to `data/processed/`.
+    - **Robustness:** Added safe markdown cleanup and fallback metadata defaults.
+- **Status:** Verified with a 20-chunk batch test (Genres: 7 slice_of_life, 13 fantasy).
+
+
 ### 5. Multi-Paragraph Story Format
 - **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
 - **Change:** Updated generation prompts to enforce exactly 3 paragraphs per story with blank line separators and dialogue.
