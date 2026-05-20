@@ -52,6 +52,16 @@ This file tracks the engineering decisions, architectural changes, and implement
     - **Persistence:** Results stored as a pickle file (`.pkl`) to preserve numpy arrays and metadata.
 - **Status:** Completed. Refactored for production safety and verified with a 20-chunk resilient test run.
 
+### 7. Vector Storage with FAISS (`src/rag/vector_store.py`)
+- **What:** Implemented a vector storage and management system using FAISS.
+- **Why:** To enable efficient, low-latency semantic retrieval of story chunks.
+- **Approach:** 
+    - **Index Type:** Used `IndexFlatL2` for exact distance calculations (brute-force L2 search).
+    - **Precision:** Enforced `float32` for all embeddings as required by FAISS optimizations.
+    - **Optimization:** Separated vector storage (`.faiss`) from metadata storage (`.pkl`) to keep the retrieval process lightweight.
+    - **Utility:** Provided helper functions for creating, saving, and loading indices.
+- **Status:** Completed. Verified indexing and loading with a 50-chunk sample.
+
 
 ### 7. Multi-Paragraph Story Format
 - **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
