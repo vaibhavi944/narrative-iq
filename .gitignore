@@ -5,6 +5,7 @@ __pycache__/
 .idea/
 PROJECT_EXPLANATION.md
 PROJECT_LOG.txt
+docs/
 data/processed/
 data/cleaned/
 *.faiss
