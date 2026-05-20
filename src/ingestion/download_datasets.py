@@ -61,10 +61,14 @@ def download_hindi():
         for i in range(50):
             topic = topics[i % len(topics)]
             prompt = (
-                f"Write a short story paragraph in Hindi (4-7 sentences) about {topic}.\n"
+                f"Write a short Hindi story with exactly 3 paragraphs about {topic}.\n"
+                "Each paragraph should be 3-5 sentences long.\n"
+                "Separate paragraphs with a blank line.\n"
                 "Use natural Hindi script (Devanagari) in a narrative storytelling style.\n"
-                "The tone should be emotionally expressive.\n"
-                "Return only the paragraph. No title. No markdown. No explanations."
+                "The tone should be emotionally expressive with varied pacing.\n"
+                "Include dialogue in at least one paragraph.\n"
+                "Return only the story paragraphs separated by blank lines.\n"
+                "No title. No markdown. No explanations."
             )
             
             completion = client.chat.completions.create(
@@ -98,11 +102,14 @@ def generate_marathi():
         count = 0
         for i in range(30):
             prompt = (
-                "Write a short story paragraph in Marathi (3-5 sentences) about daily life in Maharashtra.\n"
-                "Write in simple conversational Marathi script.\n"
+                "Write a short Marathi story with exactly 3 paragraphs about daily life in Maharashtra.\n"
+                "Each paragraph should be 3-5 sentences long.\n"
+                "Separate paragraphs with a blank line.\n"
                 "Topics to choose from: going to market, morning routine, family dinner,\n"
                 "walking to school, farming, festival preparation, visiting relatives.\n"
-                "Return only the paragraph. No title. No explanation."
+                "Include dialogue in at least one paragraph.\n"
+                "Return only the story paragraphs separated by blank lines.\n"
+                "No title. No explanation."
             )
             
             # Using llama-3.3-70b-versatile as llama3-8b-8192 is deprecated
@@ -124,6 +131,13 @@ def generate_marathi():
     except Exception as e:
         print(f"Error generating Marathi stories: {e}")
 
+def regenerate_indic():
+    """Regenerates only Hindi and Marathi datasets."""
+    print("Regenerating Hindi stories...")
+    download_hindi()
+    print("Regenerating Marathi stories...")
+    generate_marathi()
+
 # Step 6: Main function to orchestrate the downloads
 def main():
     print("Downloading English stories...")
@@ -135,4 +149,6 @@ def main():
     print("All datasets ready.")
 
 if __name__ == "__main__":
-    main()
+    print("Regenerating Hindi and Marathi stories with multi-paragraph format...")
+    regenerate_indic()
+    print("Done.")
