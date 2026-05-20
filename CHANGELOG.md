@@ -34,6 +34,7 @@ This file tracks the engineering decisions, architectural changes, and implement
 - **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
 - **Change:** Updated generation prompts to enforce exactly 3 paragraphs per story with blank line separators and dialogue.
 - **Status:** 
-    - Hindi: 50 stories successfully regenerated.
-    - Marathi: 2/30 stories generated. Currently blocked by Groq **Tokens Per Day (TPD)** rate limit. Completion pending limit reset.
+    - Hindi: 50/50 stories successfully regenerated using `llama-3.3-70b-versatile`.
+    - Marathi: 30/30 stories successfully regenerated using a hybrid approach (`llama-3.1-8b-instant` used for the final 28 stories to bypass 70b rate limits).
+    - Logic: Added file-skip logic to the ingestion script to support incremental generation.
 
