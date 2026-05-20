@@ -33,4 +33,7 @@ This file tracks the engineering decisions, architectural changes, and implement
 ### 5. Multi-Paragraph Story Format
 - **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
 - **Change:** Updated generation prompts to enforce exactly 3 paragraphs per story with blank line separators and dialogue.
-- **Status:** Updated script and regenerated Hindi data.
+- **Status:** 
+    - Hindi: 50 stories successfully regenerated.
+    - Marathi: 2/30 stories generated. Currently blocked by Groq **Tokens Per Day (TPD)** rate limit. Completion pending limit reset.
+
