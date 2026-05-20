@@ -40,7 +40,13 @@ def download_english():
 def download_hindi():
     try:
         print("Loading Hindi Discourse dataset...")
-        dataset = load_dataset("midas/hindi_discourse", split="train")
+        # trust_remote_code=True is required by HuggingFace for datasets with custom loading scripts
+        dataset = load_dataset(
+            "midas/hindi_discourse", 
+            "default", 
+            split="train", 
+            trust_remote_code=True
+        )
         
         # Group sentences by Story_no
         stories = {}
@@ -83,8 +89,9 @@ def generate_marathi():
                 "Return only the paragraph. No title. No explanation."
             )
             
+            # Using llama-3.3-70b-versatile as llama3-8b-8192 is deprecated
             completion = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}]
             )
             
