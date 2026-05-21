@@ -1,12 +1,27 @@
+# Python cache
 __pycache__/
 *.pyc
+
+# Logs
+*.log
+
+# Environment / secrets
 .env
 venv/
+.huggingface/
+
+# Project notes / docs
 PROJECT_EXPLANATION.md
 PROJECT_LOG.txt
 docs/
+
+# Raw/Cleaned datasets
 data/cleaned/
+
+# Keep ONLY final tagged metadata JSON
 !data/processed/tagged_chunks_final.json
+
+# Ignore generated vector artifacts
 data/processed/*.pkl
 data/processed/*.faiss
 data/processed/tagged_chunks_progress.json

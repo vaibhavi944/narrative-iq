@@ -113,5 +113,14 @@ This file tracks the engineering decisions, architectural changes, and implement
     - Verified the complete dataset of 2,654 chunks was indexed with 768-dimension alignment.
 - **Status:** Completed and verified with 100% data coverage.
 
+### 5. Semantic Retriever Implementation (`src/rag/retriever.py`)
+- **What:** Built the semantic search interface for multilingual narrative retrieval.
+- **Why:** To enable sub-second, cross-lingual discovery of story chunks based on semantic meaning rather than keywords.
+- **Approach:**
+    - Integrated `multilingual-e5-base` with the mandatory `query: ` prefix for high-accuracy retrieval.
+    - Implemented a lazy-loading resource manager to optimize memory usage.
+    - Verified retrieval with complex cross-lingual queries (e.g., "emotional family conflict").
+- **Status:** Completed and verified.
+
 
 
