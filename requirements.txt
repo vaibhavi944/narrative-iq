@@ -17,3 +17,7 @@ langchain-groq
 spacy
 textblob
 huggingface-hub
+transformers
+torch
+sentencepiece
+tiktoken

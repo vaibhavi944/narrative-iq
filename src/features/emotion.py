@@ -1,112 +1,103 @@
 import os
 import json
 import time
-from groq import Groq
-from dotenv import load_dotenv
+from transformers import pipeline
 
-# Load environment variables
-load_dotenv(override=True)
+# =========================================================
+# NarrativeIQ - Local Multilingual Emotion Analysis
+# =========================================================
+# Model: cardiffnlp/twitter-xlm-roberta-base-sentiment
+# Purpose:
+# Provides local, high-speed multilingual sentiment analysis
+# for English, Hindi, and Marathi stories.
+# Eliminates Groq API dependency and rate limits.
+# =========================================================
 
-# Global API Key management
-_KEYS = []
-for i in range(1, 6):
-    key = os.getenv(f"GROQ_API_KEY_{i}")
-    if key:
-        _KEYS.append(key)
-if not _KEYS:
-    single = os.getenv("GROQ_API_KEY")
-    if single:
-        _KEYS.append(single)
+print("Initializing local emotion analysis pipeline...")
+MODEL_ID = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 
-_CURRENT_KEY_INDEX = 0
-
-def get_client():
-    global _CURRENT_KEY_INDEX
-    if not _KEYS:
-        return None
-    return Groq(api_key=_KEYS[_CURRENT_KEY_INDEX])
+try:
+    # Initialize globally for performance
+    sentiment_pipeline = pipeline(
+        "sentiment-analysis",
+        model=MODEL_ID,
+        tokenizer=MODEL_ID
+    )
+    print(f"Model '{MODEL_ID}' loaded successfully.")
+except Exception as e:
+    print(f"Error loading local model: {e}")
+    sentiment_pipeline = None
 
 def get_emotion_score(paragraph, language="english"):
     """
-    Analyzes the emotional tone and intensity of a paragraph using Groq API with key rotation.
+    Analyzes emotional tone and intensity locally using XLM-RoBERTa.
+    Returns a dictionary compatible with the existing NarrativeIQ scoring engine.
     """
-    global _CURRENT_KEY_INDEX
-    
+    # Safe defaults
     polarity = 0.0
-    emotion_intensity = 0.5
-    
-    if not _KEYS:
-        print("Warning: No Groq API keys found. Using defaults for emotion.")
-        return {"polarity": 0.0, "emotion_intensity": 0.5, "emotion_score": 0.5}
+    intensity = 0.5
+    label = "Neutral"
 
-    attempts = 0
-    max_attempts = len(_KEYS) * 2
-    
-    while attempts < max_attempts:
-        try:
-            client = get_client()
-            
-            prompt = f"""You are a literary editor analyzing narrative prose.
-Analyze the emotional tone of this paragraph.
-Return only a valid JSON object with exactly these two keys:
-- polarity: a float between -1.0 and 1.0
-  (-1.0 = deeply sad/fearful/angry, 0.0 = neutral/flat, 1.0 = joyful/hopeful/loving)
-- emotion_intensity: a float between 0.0 and 1.0
-  (0.0 = completely emotionally flat, 1.0 = very emotionally rich and powerful)
+    if not sentiment_pipeline:
+        return {
+            "polarity": 0.0,
+            "intensity": 0.5,
+            "emotion_score": 0.5,
+            "label": "Neutral"
+        }
 
-Important rules:
-- Evaluate based on literary quality not just keywords
-- A paragraph describing grief with beautiful imagery should score high intensity
-- A paragraph listing facts or actions with no emotional depth should score low
-- Consider subtext, sensory details, and inner thoughts as emotional signals
-- The paragraph may be in English, Hindi, or Marathi — evaluate accordingly
-
-Paragraph:
-{paragraph}
-
-Return only the JSON object. No explanation. No markdown. No code blocks."""
-
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0
-            )
-
-            response_text = completion.choices[0].message.content.strip()
-            
-            if "```json" in response_text:
-                response_text = response_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in response_text:
-                response_text = response_text.split("```")[1].split("```")[0].strip()
-
-            data = json.loads(response_text)
-            polarity = float(data.get("polarity", 0.0))
-            emotion_intensity = float(data.get("emotion_intensity", 0.5))
-            
-            # Success - small delay and return
-            time.sleep(0.5)
-            break
-
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str or "rate_limit" in error_str.lower():
-                _CURRENT_KEY_INDEX += 1
-                if _CURRENT_KEY_INDEX >= len(_KEYS):
-                    print("Emotion Scorer: All keys exhausted. Waiting 65 seconds...")
-                    time.sleep(65)
-                    _CURRENT_KEY_INDEX = 0
-                print(f"Emotion Scorer: Switching to key {_CURRENT_KEY_INDEX + 1}...")
-            else:
-                # Non-rate-limit error: log and return defaults
-                print(f"Emotion Analysis Error: {e}")
-                break
+    try:
+        # Step 1: Inference
+        # Model returns: [{'label': 'Positive'/'Negative'/'Neutral', 'score': 0.99}]
+        result = sentiment_pipeline(paragraph[:512])[0] # Truncate for model safety
         
-        attempts += 1
+        model_label = result["label"]
+        confidence = result["score"]
 
-    emotion_score = emotion_intensity
+        # Step 2: Map Model Output to NarrativeIQ Schema
+        # Labels are usually: "Positive", "Negative", "Neutral"
+        if model_label.lower() == "positive":
+            polarity = confidence
+            label = "Positive"
+        elif model_label.lower() == "negative":
+            polarity = -confidence
+            label = "Negative"
+        else:
+            polarity = 0.0
+            label = "Neutral"
 
+        # Intensity is proxied by confidence (how strong the detected emotion is)
+        intensity = confidence
+
+    except Exception as e:
+        print(f"Local Inference Error: {e}")
+
+    # Step 3: Return structure compatible with weakness_scorer.py
     return {
         "polarity": round(float(polarity), 2),
-        "emotion_intensity": round(float(emotion_intensity), 2),
-        "emotion_score": round(float(emotion_score), 2)
+        "intensity": round(float(intensity), 2),
+        "emotion_score": round(float(intensity), 2), # Maintain key compatibility
+        "label": label
     }
+
+if __name__ == "__main__":
+    test_cases = [
+        {"lang": "English", "text": "I am so happy and excited about this new adventure! The sun is shining bright."},
+        {"lang": "Hindi", "text": "मुझे बहुत डर लग रहा है, रात के अंधेरे में कोई चिल्ला रहा था।"},
+        {"lang": "Marathi", "text": "आजचा दिवस खूपच कंटाळवाणा होता, काहीही चांगले घडले नाही."}
+    ]
+
+    print("\n" + "="*50)
+    print("LOCAL EMOTION ANALYSIS TEST")
+    print("="*50)
+
+    for tc in test_cases:
+        start_time = time.time()
+        scores = get_emotion_score(tc["text"], language=tc["lang"].lower())
+        end_time = time.time()
+        
+        print(f"Language: {tc['lang']}")
+        print(f"Text: {tc['text'][:50]}...")
+        print(f"Result: {scores}")
+        print(f"Inference Time: {(end_time - start_time)*1000:.2f}ms")
+        print("-" * 30)

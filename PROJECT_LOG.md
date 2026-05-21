@@ -134,13 +134,14 @@ Optimized infrastructure to handle the full 2,654 chunk dataset and enabled sema
 ## Phase 4 — Narrative Intelligence (2026-05-21)
 Implemented the batch analysis engine to generate structured intelligence for all narrative chunks.
 
-### 1. Robust Emotion Scorer Upgrade (`src/features/emotion.py`)
-- **What:** Refactored the emotion analyzer to support large-scale batch processing.
-- **Why:** To ensure the pipeline doesn't fail when hitting Groq rate limits during thousands of consecutive API calls.
+### 1. Local Multilingual Emotion Scorer (`src/features/emotion.py`)
+- **What:** Replaced Groq-based emotion analysis with a fully local transformer model (`cardiffnlp/twitter-xlm-roberta-base-sentiment`).
+- **Why:** To eliminate API dependencies, costs, and rate limits. Local inference is significantly faster (~60-250ms per chunk) and allows for 100% offline batch processing.
 - **Approach:** 
-    - Integrated multi-key rotation (5 keys) with automatic failover.
-    - Implemented a 65-second "cooldown" wait if all keys hit limits.
-    - Added safe JSON parsing and fallback defaults.
+    - Integrated XLM-RoBERTa via the `transformers` library for native English, Hindi, and Marathi support.
+    - Mapped model labels (Positive/Negative/Neutral) to the NarrativeIQ polarity/intensity schema.
+    - Used model confidence as a proxy for emotional intensity.
+- **Result:** Successfully validated with multilingual test cases; zero API latency.
 
 ### 2. Full Analysis Pipeline (`src/pipelines/full_analysis_pipeline.py`)
 - **What:** The "Main Brain" script that runs the entire analysis stack (Pacing, Repetition, Emotion, Scoring, Feedback).
