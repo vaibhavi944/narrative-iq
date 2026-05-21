@@ -83,9 +83,14 @@ def rerank_candidates(query_embedding, candidates, user_metadata=None):
         elif label == "Moderate":
             label_bonus = 0.3
             
-        # 4. Stylistic Alignment (Optional bonus if metadata matches)
+        # 4. Stylistic Alignment (Weighted for better grounding)
         style_bonus = 0.0
         if user_metadata:
+            # High priority: Language Match
+            if quality_data.get("language") == user_metadata.get("language"):
+                style_bonus += 0.5  # Significant boost for same language
+            
+            # Medium priority: Genre/Scene Match
             if quality_data.get("genre") == user_metadata.get("genre"):
                 style_bonus += 0.2
             if quality_data.get("scene_type") == user_metadata.get("scene_type"):
