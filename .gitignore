@@ -6,7 +6,8 @@ __pycache__/
 PROJECT_EXPLANATION.md
 PROJECT_LOG.txt
 docs/
-data/processed/
 data/cleaned/
+!data/processed/tagged_chunks_final.json
+data/processed/*
 *.faiss
 *.pkl

@@ -66,8 +66,23 @@ This file tracks the engineering decisions, architectural changes, and implement
 ### 7. Multi-Paragraph Story Format
 - **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
 - **Change:** Updated generation prompts to enforce exactly 3 paragraphs per story with blank line separators and dialogue.
-- **Status:** 
-    - Hindi: 50/50 stories successfully regenerated using `llama-3.3-70b-versatile`.
-    - Marathi: 30/30 stories successfully regenerated using a hybrid approach (`llama-3.1-8b-instant` used for the final 28 stories to bypass 70b rate limits).
+- Status: 30/30 stories successfully regenerated using a hybrid approach (`llama-3.1-8b-instant` used for the final 28 stories to bypass 70b rate limits).
     - Logic: Added file-skip logic to the ingestion script to support incremental generation.
+
+## [2026-05-21] - Full Metadata Tagging & API Resilience
+
+### 1. Robust Metadata Pipeline (`src/ingestion/metadata_pipeline.py`)
+- **What:** Overhauled the tagging pipeline to support large-scale processing.
+- **Why:** To process the entire 2,654 chunk dataset with high-quality `llama-3.3-70b-versatile` tags without failing due to rate limits.
+- **Approach:**
+    - **API Key Rotation:** Implemented rotation across 5 Groq API keys with automatic failover.
+    - **Resilience:** Added a 65-second sleep when all keys hit rate limits to allow for quota resets.
+    - **Quality Control:** Refined prompts with clear definitions and added strict validation for genre, scene type, and dialogue density.
+- **Results:** 100% of the dataset (2,654 chunks) successfully tagged.
+- **Distribution:**
+    - **Genres:** slice_of_life: 1647, fantasy: 793, drama: 125, thriller: 67, romance: 22.
+    - **Scenes:** action: 779, dialogue: 654, description: 629, emotional: 488, conflict: 104.
+    - **Dialogue Density:** none: 1286, low: 553, high: 524, medium: 291.
+- **Status:** Completed. Data saved to `data/processed/tagged_chunks_final.json`.
+
 
