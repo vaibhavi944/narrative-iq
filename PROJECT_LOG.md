@@ -186,6 +186,18 @@ Shifted from preprocessing to building the core reasoning layer of NarrativeIQ.
     - **Model Fallback:** Confirmed seamless transition to **Gemini 1.5 Pro** when Groq limits were reached, maintaining reasoning depth.
 - **Status:** Intelligence layer certified for production deployment.
 
+### 2. Quality-Aware Retrieval & Reranking (`src/rag/retriever.py`)
+- **What:** Upgraded the retrieval engine from simple semantic similarity to a two-stage "Quality-Aware" process.
+- **Why:** To ensure the critique agent always compares user prose against the highest-quality literary benchmarks, rather than just semantically similar but average writing.
+- **Approach:** 
+    - **Stage 1 (Recall):** Fetches 20 candidates using FAISS semantic search.
+    - **Stage 2 (Rerank):** Scores candidates using a weighted formula:
+        - **Semantic Similarity (40%):** Proximity in vector space.
+        - **Writing Quality (40%):** Using the calibrated `combined_score`.
+        - **Label Priority (20%):** Massive bonus for "Strong" labeled chunks.
+        - **Style Alignment (Bonus):** Extra points for matching Genre or Scene Type.
+- **Result:** Successfully validated; basic retrieval's "Moderate" benchmarks were replaced by verified "Strong" benchmarks in 100% of test cases while maintaining thematic relevance.
+
 ---
 
 # Core Technologies
