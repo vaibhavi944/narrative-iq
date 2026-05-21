@@ -96,5 +96,13 @@ This file tracks the engineering decisions, architectural changes, and implement
     - **Verification:** Manually inspected samples confirmed high semantic accuracy across English, Hindi, and Marathi.
 - **Status:** Data verified and ready for RAG/Scoring.
 
+### 3. Embedding Pipeline Refactor (`src/rag/embeddings.py`)
+- **What:** Added CLI argument support and validation for the embedding process.
+- **Why:** To allow easy switching between small-scale tests and full-dataset processing.
+- **Approach:**
+    - Integrated `argparse` for `--test` mode (20 chunks).
+    - Verified 768-dimension vector generation using `multilingual-e5-base`.
+- **Status:** Verified with a 20-chunk test run. Ready for full dataset encoding.
+
 
 
