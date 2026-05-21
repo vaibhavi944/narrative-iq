@@ -198,6 +198,16 @@ Shifted from preprocessing to building the core reasoning layer of NarrativeIQ.
         - **Style Alignment (Bonus):** Extra points for matching Genre or Scene Type.
 - **Result:** Successfully validated; basic retrieval's "Moderate" benchmarks were replaced by verified "Strong" benchmarks in 100% of test cases while maintaining thematic relevance.
 
+## Phase 6 — Production Architecture Transition (2026-05-21)
+Starting the migration from a monolithic Streamlit approach to a decoupled Next.js + FastAPI architecture.
+
+### 1. Branching Strategy for Safety
+- **Objective:** Ensure 100% reversibility and protection of the core Python intelligence logic.
+- **Workflow:**
+    - **`main` Branch:** Stays as the "Stable Python Core." It contains all validated RAG and Analysis logic and remains fully compatible with Streamlit.
+    - **`feature/nextjs-api-backend` Branch:** (Current) Used for building the FastAPI wrapper and the Next.js frontend.
+- **Status:** Branched successfully. Development of the API layer is isolated from the stable core.
+
 ---
 
 # Core Technologies
