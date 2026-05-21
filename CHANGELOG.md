@@ -79,10 +79,22 @@ This file tracks the engineering decisions, architectural changes, and implement
     - **Resilience:** Added a 65-second sleep when all keys hit rate limits to allow for quota resets.
     - **Quality Control:** Refined prompts with clear definitions and added strict validation for genre, scene type, and dialogue density.
 - **Results:** 100% of the dataset (2,654 chunks) successfully tagged.
-- **Distribution:**
+- Distribution:
     - **Genres:** slice_of_life: 1647, fantasy: 793, drama: 125, thriller: 67, romance: 22.
     - **Scenes:** action: 779, dialogue: 654, description: 629, emotional: 488, conflict: 104.
     - **Dialogue Density:** none: 1286, low: 553, high: 524, medium: 291.
 - **Status:** Completed. Data saved to `data/processed/tagged_chunks_final.json`.
+
+### 2. Metadata Validation (`check_metadata.py`)
+- **What:** Automated validation script to verify tagging quality.
+- **Why:** To detect "fallback pollution" where the API might have returned default values during rate-limit failures.
+- **Approach:**
+    - Randomly sampled 15 chunks (5 per language) with `random.seed(42)`.
+    - Calculated "Fallback Pattern" rate (slice_of_life + description).
+- **Results:**
+    - **Pollution Rate:** 15.3% (Well below the 60% danger threshold).
+    - **Verification:** Manually inspected samples confirmed high semantic accuracy across English, Hindi, and Marathi.
+- **Status:** Data verified and ready for RAG/Scoring.
+
 
 
