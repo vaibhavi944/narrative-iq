@@ -1,6 +1,6 @@
 # Project Log - Narrative IQ
 
-This file tracks the engineering decisions, architectural changes, and implementation steps for the Narrative IQ project.
+This file tracks the engineering decisions, architectural changes, and implementation steps for the Narrative IQ project. It serves as the single source of truth for the project's development history.
 
 ---
 
@@ -72,161 +72,72 @@ NarrativeIQ now supports:
 
 ---
 
-## Engineering History
-
-## [2026-05-20] - Initial Ingestion and RAG Setup
-
-### 1. Dataset Ingestion Script (`src/ingestion/download_datasets.py`)
-- **What:** Created a script to collect story datasets for English, Hindi, and Marathi.
-- **Why:** To build a multilingual corpus for story analysis and RAG.
-- **Approach:** 
-    - **English:** Downloads 500 stories from HuggingFace's `TinyStories`.
-    - **Hindi/Marathi:** Initially planned as dataset downloads, but shifted to synthetic generation.
-- **Status:** Completed.
-
-### 2. Infrastructure Updates
-- **Why:** Addressed HuggingFace's security policy changes and model deprecations.
-- **Changes:**
-    - Enabled `trust_remote_code=True` for Hindi dataset loading (before migration to synthetic).
-    - Upgraded Groq model from `llama3-8b-8192` to `llama-3.3-70b-versatile` for better generation quality and future-proofing.
-- **Status:** Completed.
-
-### 3. Shift to Synthetic Indic Data
-- **Why:** Legacy Indic datasets (like `hindi_discourse`) were inconsistent and difficult to chunk effectively. Synthetic generation provides control over length, tone, and formatting.
-- **Approach:** Used Groq's `llama-3.3-70b-versatile` to generate stories with specific topics (village life, festivals, etc.) and expressive narrative styles.
-- **Status:** Hindi (50 stories) regenerated. Marathi (30 stories) pending rate limit reset.
-
-### 4. RAG Chunking Pipeline (`src/rag/chunking.py`)
-- **What:** Implemented a paragraph-based chunking system.
-- **Why:** Foundation for retrieval-augmented generation. Paragraphs provide better semantic context than fixed-size chunks for stories.
-- **Approach:** Recursive file reading, double-newline splitting, and metadata enrichment (unique IDs, word counts, language tags).
-- **Status:** Completed.
-
-### 5. Metadata Tagging Pipeline (`src/ingestion/metadata_pipeline.py`)
-- **What:** Automated semantic tagging for genre, scene type, and dialogue density.
-- **Why:** To enable deep filtering and thematic analysis within the RAG system.
-- **Approach:** Refactored for scalability using Groq `llama-3.3-70b-versatile`.
-    - **Batching:** Processes 10 chunks per API call to reduce latency and overhead.
-    - **Safety:** Implemented 1s rate-limit delay and incremental progress saving to `data/processed/`.
-    - **Robustness:** Added safe markdown cleanup, robust JSON array parsing (handling dict-to-list conversion), and fallback metadata defaults.
-    - **Fix:** Resolved a `NameError` in the test block caused by incorrect indentation of samples display logic.
-- **Status:** Verified with a 15-chunk multilingual batch test (Genres: 10 slice_of_life, 2 fantasy, 3 drama).
-
-### 6. Semantic Embedding Pipeline (`src/rag/embeddings.py`)
-- **What:** Implemented a multilingual embedding generation system.
-- **Why:** To enable vector-based semantic search across English, Hindi, and Marathi stories.
-- **Approach:** 
-    - **Model:** Used `intfloat/multilingual-e5-base` from `sentence-transformers`.
-    - **Formatting:** Applied "passage: " prefix required for E5 asymmetric retrieval.
-    - **Optimization:** Global model loading and manual batch processing (batch_size=32).
-    - **Resilience:** Implemented isolated batch-level exception handling to prevent entire pipeline failure on single-batch errors.
-    - **Tracking:** Added `embedding_status` metadata and detailed success/failure statistics.
-    - **Persistence:** Results stored as a pickle file (`.pkl`) to preserve numpy arrays and metadata.
-- **Status:** Completed. Refactored for production safety and verified with a 20-chunk resilient test run.
-
-### 7. Vector Storage with FAISS (`src/rag/vector_store.py`)
-- **What:** Implemented a vector storage and management system using FAISS.
-- **Why:** To enable efficient, low-latency semantic retrieval of story chunks.
-- **Approach:** 
-    - **Index Type:** Used `IndexFlatL2` for exact distance calculations (brute-force L2 search).
-    - **Precision:** Enforced `float32` for all embeddings as required by FAISS optimizations.
-    - **Optimization:** Separated vector storage (`.faiss`) from metadata storage (`.pkl`) to keep the retrieval process lightweight.
-    - **Utility:** Provided helper functions for creating, saving, and loading indices.
-- **Status:** Completed. Verified indexing and loading with a 50-chunk sample.
-
-
-### 8. Multi-Paragraph Story Format
-- **Why:** To test the chunking pipeline, stories needed multiple paragraphs. 
-- **Change:** Updated generation prompts to enforce exactly 3 paragraphs per story with blank line separators and dialogue.
-- Status: 30/30 stories successfully regenerated using a hybrid approach (`llama-3.1-8b-instant` used for the final 28 stories to bypass 70b rate limits).
-    - Logic: Added file-skip logic to the ingestion script to support incremental generation.
-
-## [2026-05-21] - Full Metadata Tagging & API Resilience
-
-### 1. Robust Metadata Pipeline (`src/ingestion/metadata_pipeline.py`)
-- **What:** Overhauled the tagging pipeline to support large-scale processing.
-- **Why:** To process the entire 2,654 chunk dataset with high-quality `llama-3.3-70b-versatile` tags without failing due to rate limits.
-- **Approach:**
-    - **API Key Rotation:** Implemented rotation across 5 Groq API keys with automatic failover.
-    - **Resilience:** Added a 65-second sleep when all keys hit rate limits to allow for quota resets.
-    - **Quality Control:** Refined prompts with clear definitions and added strict validation for genre, scene type, and dialogue density.
-- **Results:** 100% of the dataset (2,654 chunks) successfully tagged.
-- Distribution:
-    - **Genres:** slice_of_life: 1647, fantasy: 793, drama: 125, thriller: 67, romance: 22.
-    - **Scenes:** action: 779, dialogue: 654, description: 629, emotional: 488, conflict: 104.
-    - **Dialogue Density:** none: 1286, low: 553, high: 524, medium: 291.
-- **Status:** Completed. Data saved to `data/processed/tagged_chunks_final.json`.
-
-### 2. Metadata Validation (`check_metadata.py`)
-- **What:** Automated validation script to verify tagging quality.
-- **Why:** To detect "fallback pollution" where the API might have returned default values during rate-limit failures.
-- **Approach:**
-    - Randomly sampled 15 chunks (5 per language) with `random.seed(42)`.
-    - Calculated "Fallback Pattern" rate (slice_of_life + description).
-- **Results:**
-    - **Pollution Rate:** 15.3% (Well below the 60% danger threshold).
-    - **Verification:** Manually inspected samples confirmed high semantic accuracy across English, Hindi, and Marathi.
-- **Status:** Data verified and ready for RAG/Scoring.
-
-### 3. Embedding Pipeline Refactor (`src/rag/embeddings.py`)
-- **What:** Added CLI argument support and validation for the embedding process.
-- **Why:** To allow easy switching between small-scale tests and full-dataset processing.
-- **Approach:**
-    - Integrated `argparse` for `--test` mode (20 chunks).
-    - Verified 768-dimension vector generation using `multilingual-e5-base`.
-- **Status:** Verified with a 20-chunk test run. Ready for full dataset encoding.
-
-### 4. Vector Store Implementation (`src/rag/vector_store.py`)
-- **What:** Completed the FAISS vector database for sub-second semantic retrieval.
-- **Why:** To provide an efficient and scalable search infrastructure for multilingual narratives.
-- **Approach:**
-    - Used `faiss.IndexFlatL2` for exact nearest-neighbor search.
-    - Separated high-dimensional vectors (`.faiss`) from metadata (`.pkl`) for memory efficiency.
-    - Verified the complete dataset of 2,654 chunks was indexed with 768-dimension alignment.
-- **Status:** Completed and verified with 100% data coverage.
-
-### 5. Semantic Retriever Implementation (`src/rag/retriever.py`)
-- **What:** Built the semantic search interface for multilingual narrative retrieval.
-- **Why:** To enable sub-second, cross-lingual discovery of story chunks based on semantic meaning rather than keywords.
-- **Approach:**
-    - Integrated `multilingual-e5-base` with the mandatory `query: ` prefix for high-accuracy retrieval.
-    - Implemented a lazy-loading resource manager to optimize memory usage.
-    - Verified retrieval with complex cross-lingual queries (e.g., "emotional family conflict").
-- **Status:** Completed and verified.
-
-## Final System Capabilities
+# Final System Capabilities
 
 NarrativeIQ now supports:
+- **Multilingual semantic narrative retrieval:** Search across English, Hindi, and Marathi simultaneously.
+- **Cross-language story search:** Retrieve relevant content even if the query language differs from the story language.
+- **Semantic vector search:** Powered by FAISS and E5 embeddings for high-accuracy thematic matching.
+- **Metadata-aware narrative indexing:** High-quality tags for genre, scene type, and dialogue density.
+- **Semantic clustering:** Automatically groups emotional and thematic scenes across the dataset.
+- **Scalable architecture:** Robust pipelines for large-scale multilingual RAG.
 
-- multilingual semantic narrative retrieval
-- cross-language story search
-- semantic vector search using FAISS
-- metadata-aware narrative indexing
-- semantic clustering of emotional and thematic scenes
-- retrieval-augmented narrative infrastructure
-- scalable multilingual RAG architecture
+---
 
-Example capabilities:
-- English queries retrieving Hindi emotional scenes
-- fantasy/adventure semantic retrieval
-- thriller atmosphere detection
-- family/emotional scene discovery
+# Engineering History & Approach Changes
 
-Current retrieval stack:
+## Phase 1 — Heuristic Foundation (2026-05-18)
+The goal was to establish a robust linguistic foundation using heuristic analysis and large language models (Groq) for deeper emotional understanding.
 
-User Query
-→ Query Embedding
-→ FAISS Semantic Search
-→ Metadata Mapping
-→ Narrative Retrieval
+### Core Analysis Files:
+1. **`src/utils/text_splitter.py`**: Breaks down raw text into paragraphs using double newlines.
+2. **`src/features/pacing.py`**: Measures sentence length variance to analyze narrative rhythm.
+3. **`src/features/repetition.py`**: Detects repetitive starters, words, and bigrams with multilingual noise filtering.
+4. **`src/features/emotion.py`**: Initially lexicon-based, then upgraded to Groq API for literary nuance.
+5. **`src/scoring/weakness_scorer.py`**: Aggregates features into qualitative labels (Weak/Moderate/Strong).
+6. **`src/scoring/feedback_generator.py`**: Converts raw scores into actionable writing tips.
 
-Core Technologies:
-- Sentence Transformers (`multilingual-e5-base`)
-- FAISS (`IndexFlatL2`)
-- Groq (`llama-3.3-70b-versatile`)
-- Python
-- NumPy
-- Pickle-based metadata persistence
+### Phase 1 Approach Changes:
+- **Sentence Splitting**: Moved from simple punctuation splits to `nltk` (English) and regex `[à¥¤?!.]` (Hindi/Marathi) to handle abbreviations and modern punctuation correctly.
+- **Emotion Scoring**: Switched from TextBlob/Lexicons to **Groq (Llama 3.3 70B)** because standard tools failed to capture literary subtext and imagery.
+- **Scoring Weights**: Implemented language-aware weights (Emotion reduced for Hindi/Marathi) to account for naturally expressive Indic prose style.
+- **Repetition Filtering**: Added `len(word) > 1` filter to remove noise from single-character tokens in Hindi and Marathi.
 
-Current Project State:
-The multilingual semantic retrieval backbone is now fully operational and validated across English, Hindi, and Marathi datasets.
+## Phase 2 — Ingestion and RAG Setup (2026-05-20)
+Shifted focus to building a high-quality multilingual corpus and the foundation for semantic retrieval.
+
+### 1. Dataset Ingestion & Synthetic Shift
+- **Approach**: Ingested 500 English `TinyStories`. For Hindi and Marathi, moved from difficult-to-parse legacy datasets to **Synthetic Generation** using Groq.
+- **Why**: Provided full control over story length, tone, and multi-paragraph formatting required for the chunking pipeline.
+
+### 2. RAG Chunking & Initial Tagging
+- **Approach**: Implemented paragraph-based chunking with unique IDs and word counts.
+- **Metadata Tagging**: Built the first batch-processing pipeline using Groq for Genre and Scene Type.
+
+## Phase 3 — Production Scale & Retrieval (2026-05-21)
+Optimized infrastructure to handle the full 2,654 chunk dataset and enabled semantic search.
+
+### 1. Robust Metadata Pipeline
+- **Change**: Implemented **API Key Rotation** (across 5 keys) and 65s rate-limit recovery.
+- **Why**: To process thousands of chunks with high-quality 70B models without failing.
+
+### 2. Embedding & Vector Store
+- **Model**: Integrated `multilingual-e5-base` with mandatory `passage: ` and `query: ` prefixes.
+- **FAISS**: Built an `IndexFlatL2` store, separating large vector artifacts from lightweight metadata.
+
+### 3. Semantic Retriever
+- **Completion**: Finalized the retrieval interface, enabling sub-second cross-lingual discovery.
+- **Validation**: Confirmed that English queries correctly retrieve relevant emotional or thematic content in Hindi and Marathi.
+
+---
+
+# Core Technologies
+- **Sentence Transformers**: `multilingual-e5-base`
+- **FAISS**: `IndexFlatL2`
+- **Groq**: `llama-3.3-70b-versatile` & `llama-3.1-8b-instant`
+- **Python Stack**: NumPy, Pickle, NLTK, Scikit-learn
+- **Dataset**: TinyStories (English) + Synthetic Indic (Hindi/Marathi)
+
+---
+
+*Current Project State: The multilingual semantic retrieval backbone is fully operational and validated.*
