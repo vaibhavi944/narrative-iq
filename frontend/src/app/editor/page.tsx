@@ -157,33 +157,33 @@ export default function EditorPage() {
                 <div className="p-8 border-b border-stone-100 bg-stone-50/30">
                   <div className="flex items-center justify-between mb-10">
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 block mb-2">Narrative Grade</span>
+                      <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 block mb-2">Scene Analysis</span>
                       <h3 className={cn(
                         "text-2xl font-bold tracking-tight",
                         result.label === "Strong" ? "text-emerald-600" : "text-amber-600"
                       )}>
-                        {result.label} Coverage
+                        {result.label === "Strong" ? "Beautifully Written" : result.label === "Moderate" ? "Good Foundation" : "Needs Care"}
                       </h3>
                     </div>
                     <div className="text-right">
                       <div className="text-4xl font-bold tabular-nums text-stone-900">{Math.round(result.combined_score * 100)}</div>
-                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Quality Index</span>
+                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Narrative Impact</span>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <ScoreBar label="Pacing" score={result.pacing.pacing_score} />
-                    <ScoreBar label="Cleanliness" score={result.repetition.repetition_score} />
-                    <ScoreBar label="Emotion" score={result.emotion.emotion_score} />
+                    <ScoreBar label="Story Flow" score={result.pacing.pacing_score} />
+                    <ScoreBar label="Writing Clarity" score={result.repetition.repetition_score} />
+                    <ScoreBar label="Emotional Heart" score={result.emotion.emotion_score} />
                   </div>
                 </div>
 
                 <div className="p-8 space-y-12">
                   {/* AI Critique */}
                   <section>
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-6">Editorial Critique</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-6">Your Mentor's Thoughts</h3>
                     <div className="space-y-6">
-                      <p className="text-[15px] text-stone-700 leading-relaxed font-medium bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50">
+                      <p className="text-[15px] text-stone-700 leading-relaxed font-medium bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50 italic">
                         {result.feedback.summary}
                       </p>
                       <div className="space-y-4">
@@ -199,16 +199,12 @@ export default function EditorPage() {
 
                   {/* Benchmark Comparison */}
                   <section className="pt-4">
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-6">Strong Comparison</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-6">A Guiding Example</h3>
                     <div className="document-card p-6 border-stone-200">
                       <div className="flex items-center justify-between mb-5">
                         <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest bg-indigo-50 px-2 py-1 rounded">
                           {result.benchmark_example.genre} / {result.benchmark_example.scene_type}
                         </span>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase">
-                          <Activity className="w-3 h-3" />
-                          Match: 89%
-                        </div>
                       </div>
                       <p className="text-[15px] font-serif text-stone-800 leading-[1.7] italic mb-6 border-l-2 border-stone-200 pl-5">
                         "{result.benchmark_example.text}"
