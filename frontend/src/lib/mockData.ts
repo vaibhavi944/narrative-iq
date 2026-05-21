@@ -1,57 +1,60 @@
 export const MOCK_ANALYSIS = {
-  chunk_id: "demo_chunk_001",
+  chunk_id: "demo_chunk_queen",
   language: "english",
-  genre: "slice_of_life",
+  genre: "fantasy",
   scene_type: "description",
   dialogue_density: "none",
   combined_score: 0.45,
   label: "Weak",
   pacing: {
-    avg_sentence_length: 4.0,
-    variance: 0.0,
+    avg_sentence_length: 5.2,
+    variance: 1.5,
     pacing_score: 0.4,
   },
   repetition: {
-    repeated_starters: ["The"],
-    repeated_words: ["boy"],
-    repeated_bigrams: ["the boy"],
-    repetition_score: 0.65,
+    repeated_starters: ["The", "She"],
+    repeated_words: ["queen", "castle", "bug", "relax"],
+    repeated_bigrams: ["the queen"],
+    repetition_score: 0.55,
   },
   emotion: {
-    polarity: -0.71,
-    intensity: 0.71,
-    emotion_score: 0.71,
-    label: "Negative",
+    polarity: 0.2,
+    intensity: 0.4,
+    emotion_score: 0.4,
+    label: "Neutral",
   },
   reasons: [
-    "Prose is overly simplistic or choppy",
+    "Heavy repetition weakens readability",
     "Pacing is monotonous or lacks rhythmic variety",
-    "Repetitive wording reduces narrative richness",
+    "Prose is overly simplistic or choppy",
   ],
   feedback: {
-    summary: "This section feels repetitive, which distracts from the story. Focusing on word variety will help.",
+    summary: "The scene communicates clearly, but repetitive wording and short sentences reduce the narrative richness.",
     tips: [
-      "Vary sentence structure: Combine short and long sentences to create a more dynamic rhythm.",
-      "Use descriptive language: Replace repetitive phrases with more descriptive adjectives.",
-      "Show, don't tell: Try to show the boy's emotions through actions rather than just stating he was sad.",
+      "Vary sentence structure: Combine your observations into more fluid descriptions.",
+      "Vary your word choice: Instead of repeating 'queen' and 'castle', try descriptive alternatives.",
+      "Show character reactions: Describe the queen's surroundings and feelings in more detail.",
     ],
   },
-  text: "The boy walked home. The boy saw rain. The boy was sad. The boy went inside. The rain was cold.",
+  text: "Once upon a time, there was a queen. She was a very nice queen. She had a big, pretty castle. The queen had a lot of work to do every day. But today, she wanted to relax.\n\nThe queen went to the park to relax. She sat on a soft, green grass. The queen saw a bug. The bug was disgusting. The queen did not like the disgusting bug.\n\nThe queen went back to her castle. She was happy to be away from the disgusting bug. Now, the queen could relax in her big, pretty castle. The queen smiled and had a good day.",
   benchmark_example: {
-    chunk_id: "eng_301_03",
-    text: "The mother said to the father, 'Let's go inside quick and get the pup warm.' But the father said, 'It's ok, the pup will be fine in this weather,' and he began to walk away into the swirling gray mist.",
+    chunk_id: "eng_245_07",
+    text: "So off they went, happy to enjoy the day together. They spent hours talking and playing, and they both felt so lucky to have each other as friends. It was a day they would never forget.",
     label: "Strong",
     reasons: ["Well-balanced prose with good rhythm and clarity"],
     genre: "slice_of_life",
-    scene_type: "dialogue",
+    scene_type: "action",
   },
-  agent_critique: `The BENCHMARK PARAGRAPH excels in its use of varied sentence structure, creating a more dynamic rhythm. It also employs dialogue and specific sensory details like "swirling gray mist", which adds depth and nuance. In contrast, the USER'S PARAGRAPH suffers from repetitive sentence starters and a monotonous pace.
+  agent_critique: `Your story has a wonderful, classic feel, but the rhythm is currently quite uniform. 
 
-### Actionable Steps:
-1. **Vary Sentence Structure**: Merge some of your shorter sentences. "As the cold rain began to fall, the boy walked home with a heavy heart."
-2. **Inject Specificity**: Instead of "The boy saw rain," describe how it felt or sounded.
-3. **Enhance Flow**: Use transitional words like "Suddenly" or "Meanwhile" to connect the boy's actions to the environment.`,
-  suggested_rewrite: "As the first cold drops began to fall, the boy started his long walk home, his heart heavy with a weight he couldn't quite name. Through the swirling gray mist, he watched the world blur into a somber shade of blue before finally escaping into the quiet warmth of his room.",
+**Craft Comparison**
+The benchmark example shows how to use transitional phrases and varied sentence lengths to create a sense of momentum. Notice how it groups actions ("talking and playing") to keep the pace moving. In your draft, each small action gets its own short sentence, which can feel a bit repetitive to a reader.
+
+**Actionable Steps:**
+1. **Combine Actions**: Try merging some of the queen's daily routine into a single, fluid sentence.
+2. **Describe the Setting**: Instead of saying the castle is "big and pretty," pick one specific detail—like "towering spires" or "sun-drenched halls"—to make it feel unique.
+3. **Show the Disgust**: Instead of stating the bug was "disgusting," describe how the queen's nose wrinkled or how she gathered her silk skirts to hurry away.`,
+  suggested_rewrite: "The queen spent most of her days working inside her grand castle, but today she longed for rest. Hoping for peace and quiet, she wandered into the royal park and settled onto the soft green grass. \n\nAs she relaxed beneath the warm sunlight, a strange bug crawled across her dress. The queen quickly stood up in disgust and hurried back toward the safety of her beautiful castle. Once inside, she finally relaxed again, smiling as the castle doors closed behind her.",
 };
 
 export type AnalysisResult = typeof MOCK_ANALYSIS;
