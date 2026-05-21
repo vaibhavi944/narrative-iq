@@ -159,11 +159,24 @@ Implemented the batch analysis engine to generate structured intelligence for al
     - **Strong**: 731 (27.5%) — Properly selective for high-quality narrative.
     - **Moderate**: 1,767 (66.6%) — Correctly captures the majority of average/good writing.
     - **Weak**: 156 (5.9%) — Effectively identifies sections with significant structural or repetitive flaws.
-- **Status:** Completed. Final intelligence saved to `data/processed/full_narrative_analysis.json`.
+- Status: Completed. Final intelligence saved to `data/processed/full_narrative_analysis.json`.
+
+## Phase 5 — Interactive AI Behavior (2026-05-21)
+Shifted from preprocessing to building the core reasoning layer of NarrativeIQ.
+
+### 1. Writer Critique Agent (`src/agents/writer_critique_agent.py`)
+- **What:** The first true intelligence layer that orchestrates the entire stack.
+- **Why:** To move beyond passive scoring and provide writers with comparative, context-aware feedback.
+- **Approach:** 
+    - **Orchestration:** User input is analyzed by the `weakness_scorer`.
+    - **RAG Retrieval:** The `retriever` finds a semantically similar "Strong" benchmark from the 2,654-chunk library.
+    - **Comparative Reasoning:** Uses **Llama 3.3 70B** to compare the user text with the benchmark, explaining technical differences and providing actionable transformation steps.
+- **Result:** Successfully validated; provides high-quality, encouraging, and technically precise writing advice.
 
 ---
 
 # Core Technologies
+
 - **Sentence Transformers**: `multilingual-e5-base`
 - **FAISS**: `IndexFlatL2`
 - **Groq**: `llama-3.3-70b-versatile` & `llama-3.1-8b-instant`
