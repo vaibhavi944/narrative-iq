@@ -179,6 +179,23 @@ export default function EditorPage() {
                 </div>
 
                 <div className="p-8 space-y-12">
+                  {/* Suggested Rewrite */}
+                  <section>
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-500 mb-6">Refined Version</h3>
+                    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-3xl border border-indigo-100 shadow-sm relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:rotate-12 transition-transform">
+                        <Sparkles className="w-10 h-10 text-indigo-600" />
+                      </div>
+                      <p className="text-[17px] font-serif text-stone-900 leading-[1.8] italic relative z-10">
+                        {result.suggested_rewrite}
+                      </p>
+                      <button className="mt-6 text-[12px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1.5 group/btn">
+                        Apply to Editor
+                        <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                      </button>
+                    </div>
+                  </section>
+
                   {/* AI Critique */}
                   <section>
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-6">Your Mentor's Thoughts</h3>

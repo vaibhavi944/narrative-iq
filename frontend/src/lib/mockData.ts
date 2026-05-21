@@ -51,6 +51,7 @@ export const MOCK_ANALYSIS = {
 1. **Vary Sentence Structure**: Merge some of your shorter sentences. "As the cold rain began to fall, the boy walked home with a heavy heart."
 2. **Inject Specificity**: Instead of "The boy saw rain," describe how it felt or sounded.
 3. **Enhance Flow**: Use transitional words like "Suddenly" or "Meanwhile" to connect the boy's actions to the environment.`,
+  suggested_rewrite: "As the first cold drops began to fall, the boy started his long walk home, his heart heavy with a weight he couldn't quite name. Through the swirling gray mist, he watched the world blur into a somber shade of blue before finally escaping into the quiet warmth of his room.",
 };
 
 export type AnalysisResult = typeof MOCK_ANALYSIS;
