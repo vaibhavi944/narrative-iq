@@ -104,5 +104,14 @@ This file tracks the engineering decisions, architectural changes, and implement
     - Verified 768-dimension vector generation using `multilingual-e5-base`.
 - **Status:** Verified with a 20-chunk test run. Ready for full dataset encoding.
 
+### 4. Vector Store Implementation (`src/rag/vector_store.py`)
+- **What:** Completed the FAISS vector database for sub-second semantic retrieval.
+- **Why:** To provide an efficient and scalable search infrastructure for multilingual narratives.
+- **Approach:**
+    - Used `faiss.IndexFlatL2` for exact nearest-neighbor search.
+    - Separated high-dimensional vectors (`.faiss`) from metadata (`.pkl`) for memory efficiency.
+    - Verified the complete dataset of 2,654 chunks was indexed with 768-dimension alignment.
+- **Status:** Completed and verified with 100% data coverage.
+
 
 
