@@ -170,8 +170,9 @@ Shifted from preprocessing to building the core reasoning layer of NarrativeIQ.
 - **Approach:** 
     - **Orchestration:** User input is analyzed by the `weakness_scorer`.
     - **RAG Retrieval:** The `retriever` finds a semantically similar "Strong" benchmark from the 2,654-chunk library.
+    - **Robustness:** Implemented `_normalize_chunk` to prevent KeyErrors and added **Multi-Key Rotation** to bypass 100k Daily Token Limits.
     - **Comparative Reasoning:** Uses **Llama 3.3 70B** to compare the user text with the benchmark, explaining technical differences and providing actionable transformation steps.
-- **Result:** Successfully validated; provides high-quality, encouraging, and technically precise writing advice.
+- **Result:** Successfully validated across 8 diverse test cases (Repetitive, Action, Dialogue, Multilingual). Demonstrated high-quality reasoning and semantic bridge-building between languages.
 
 ---
 
