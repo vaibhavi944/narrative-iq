@@ -131,6 +131,28 @@ Optimized infrastructure to handle the full 2,654 chunk dataset and enabled sema
 
 ---
 
+## Phase 4 — Narrative Intelligence (2026-05-21)
+Implemented the batch analysis engine to generate structured intelligence for all narrative chunks.
+
+### 1. Robust Emotion Scorer Upgrade (`src/features/emotion.py`)
+- **What:** Refactored the emotion analyzer to support large-scale batch processing.
+- **Why:** To ensure the pipeline doesn't fail when hitting Groq rate limits during thousands of consecutive API calls.
+- **Approach:** 
+    - Integrated multi-key rotation (5 keys) with automatic failover.
+    - Implemented a 65-second "cooldown" wait if all keys hit limits.
+    - Added safe JSON parsing and fallback defaults.
+
+### 2. Full Analysis Pipeline (`src/pipelines/full_analysis_pipeline.py`)
+- **What:** The "Main Brain" script that runs the entire analysis stack (Pacing, Repetition, Emotion, Scoring, Feedback).
+- **Why:** To create the final intelligence dataset (`full_narrative_analysis.json`) required for the UI and AI critiquing agents.
+- **Approach:**
+    - Processes all 2,654 story chunks with progress tracking every 25 units.
+    - Supports resuming from progress files if interrupted.
+    - Captures comprehensive stats (label distribution, average scores).
+- **Status:** Verified with a 20-chunk test run (Results: 15 Strong, 5 Moderate; Avg Score: 0.65).
+
+---
+
 # Core Technologies
 - **Sentence Transformers**: `multilingual-e5-base`
 - **FAISS**: `IndexFlatL2`
