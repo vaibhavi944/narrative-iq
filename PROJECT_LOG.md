@@ -152,6 +152,15 @@ Implemented the batch analysis engine to generate structured intelligence for al
     - Captures comprehensive stats (label distribution, average scores).
 - **Status:** Verified with a 20-chunk test run (Results: 15 Strong, 5 Moderate; Avg Score: 0.65).
 
+### 3. Full Dataset Analysis Completion
+- **What:** Executed the complete analysis pipeline on all 2,654 story chunks using local XLM-RoBERTa and calibrated scoring.
+- **Why:** To finalize the intelligence dataset for the future FastAPI/Next.js production system.
+- **Results (Final Calibration Audit):**
+    - **Strong**: 731 (27.5%) — Properly selective for high-quality narrative.
+    - **Moderate**: 1,767 (66.6%) — Correctly captures the majority of average/good writing.
+    - **Weak**: 156 (5.9%) — Effectively identifies sections with significant structural or repetitive flaws.
+- **Status:** Completed. Final intelligence saved to `data/processed/full_narrative_analysis.json`.
+
 ---
 
 # Core Technologies
