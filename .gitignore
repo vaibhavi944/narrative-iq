@@ -1,13 +1,12 @@
 __pycache__/
 *.pyc
 .env
-.vscode/
-.idea/
+venv/
 PROJECT_EXPLANATION.md
 PROJECT_LOG.txt
 docs/
 data/cleaned/
 !data/processed/tagged_chunks_final.json
-data/processed/*
-*.faiss
-*.pkl
+data/processed/*.pkl
+data/processed/*.faiss
+data/processed/tagged_chunks_progress.json
