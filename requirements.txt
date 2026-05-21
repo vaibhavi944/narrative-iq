@@ -22,3 +22,5 @@ torch
 sentencepiece
 tiktoken
 google-generativeai
+fastapi
+uvicorn

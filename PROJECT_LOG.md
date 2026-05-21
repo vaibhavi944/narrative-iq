@@ -208,6 +208,18 @@ Starting the migration from a monolithic Streamlit approach to a decoupled Next.
     - **`feature/nextjs-api-backend` Branch:** (Current) Used for building the FastAPI wrapper and the Next.js frontend.
 - **Status:** Branched successfully. Development of the API layer is isolated from the stable core.
 
+### 3. FastAPI Backend Implementation (`src/main_api.py`)
+- **What:** Built a high-performance REST API to serve the NarrativeIQ intelligence layer.
+- **Why:** To decouple the AI logic from the UI and enable integration with the future Next.js/Tailwind frontend.
+- **Approach:** 
+    - **Endpoints:**
+        - `POST /analyze`: Detailed narrative scoring (Flow, Clarity, Emotion).
+        - `POST /critique`: End-to-end orchestration (Analysis + RAG Retrieval + Contextual Rewrite).
+        - `GET /health`: System monitoring and status check.
+    - **Performance:** Implemented singleton agent initialization to maintain models and FAISS index in memory.
+    - **Security:** Configured CORS middleware to support cross-origin requests from the Vercel-hosted frontend.
+- **Status:** Backend operational and ready for frontend connectivity.
+
 ---
 
 # Core Technologies
