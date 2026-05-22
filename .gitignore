@@ -16,12 +16,17 @@ frontend/.next/
 frontend/node_modules/
 frontend/out/
 
-# Data - Ignore all large raw and processed data
+# Data - Ignore raw stories but allow processed brains
 data/raw_stories/
-data/processed/*.json
-data/processed/*.pkl
-data/processed/*.faiss
 data/processed/*.txt
+data/processed/tagged_chunks_progress.json
+
+# Allow the 'brains' of the editor
+!data/processed/full_narrative_analysis.json
+!data/processed/tagged_chunks_final.json
+!data/processed/narrative_index.faiss
+!data/processed/embedded_chunks.pkl
+!data/processed/chunk_metadata.pkl
 
 # Keep ONLY the structure or example data if absolutely needed
 # !data/processed/tagged_chunks_final.json (Ignoring as it might be large)
