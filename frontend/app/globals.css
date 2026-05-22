@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #fafaf8;
+  --bg-panel: #f4f4f2;
+  --bg-dark: #121211;
+  --text-main: #1a1a18;
+  --text-secondary: #52524e;
+  --text-hint: #9e9e9a;
+  --accent: #4338ca;
+  --accent-soft: #f0f2ff;
+  --border: #e9e9e5;
+  --border-strong: #d8d8d4;
+  
+  --score-strong: #166534;
+  --score-moderate: #b45309;
+  --score-weak: #b91c1c;
+}
+
+@theme {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-devanagari: var(--font-mukta), sans-serif;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ====================================================
+   ULTIMATE DEVANAGARI UI REPAIR
+   Forces Mukta and disables ALL Latin-style spacing globally
+   Specifically fixes "लिखाण तपासा" and all UI buttons
+   ==================================================== */
+
+[lang="hi"], [lang="mr"], .font-devanagari {
+  font-family: var(--font-devanagari) !important;
+  letter-spacing: 0 !important; 
+  word-spacing: normal !important;
+  text-transform: none !important; /* CRITICAL: Uppercase breaks Devanagari */
+  font-style: normal !important;
+  font-variant-ligatures: common-ligatures !important;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1 !important;
+}
+
+/* Force override for ALL nested elements in Devanagari blocks */
+[lang="hi"] *, [lang="mr"] * {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* Latin Typography - ONLY for English elements */
+:not([lang="hi"]):not([lang="mr"]) .cinematic-heading {
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-weight: 500;
+}
+
+:not([lang="hi"]):not([lang="mr"]) .literary-prose {
+  font-family: var(--font-serif);
+  line-height: 1.65;
+  font-size: 1.15rem;
+  letter-spacing: -0.005em;
+}
+
+/* Visual Depth - The "Luxury" Polish */
+.luxury-card {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 15px 35px -10px rgba(0,0,0,0.03);
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.luxury-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px -15px rgba(67, 56, 202, 0.06);
+  border-color: rgba(67, 56, 202, 0.1);
+}
+
+.hero-glow {
+  background: radial-gradient(circle at 50% 50%, #ffffff 0%, #fafaf8 100%);
+}
+
+/* Animations */
+.reveal {
+  animation: reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 1.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 10px;
+}
