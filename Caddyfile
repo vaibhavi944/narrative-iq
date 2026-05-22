@@ -1,0 +1,8 @@
+{$CADDY_HOST:localhost} {
+    encode gzip zstd
+
+    @backend path /analyze /rewrite /health
+    reverse_proxy @backend backend:8000
+
+    reverse_proxy frontend:3000
+}

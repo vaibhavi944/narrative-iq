@@ -1,10 +1,25 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+function getApiBaseUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured !== undefined) {
+    return configured;
+  }
+
+  if (typeof window !== "undefined") {
+    const { hostname, origin } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+    return origin;
+  }
+
+  return "http://localhost:8000";
+}
 
 export async function analyzeText(text: string, language: string) {
   try {
-    const response = await axios.post(`${API_URL}/analyze`, { text, language });
+    const response = await axios.post(`${getApiBaseUrl()}/analyze`, { text, language });
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -16,7 +31,7 @@ export async function analyzeText(text: string, language: string) {
 
 export async function rewriteText(text: string, language: string, benchmarkText: string, benchmarkId: string) {
   try {
-    const response = await axios.post(`${API_URL}/rewrite`, { 
+    const response = await axios.post(`${getApiBaseUrl()}/rewrite`, { 
       text, 
       language, 
       benchmark_text: benchmarkText, 

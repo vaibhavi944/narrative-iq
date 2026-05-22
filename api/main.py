@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
+from typing import Optional
 
 load_dotenv()
 
@@ -18,12 +19,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-agent = WriterCritiqueAgent()
+_agent: Optional[WriterCritiqueAgent] = None
 
-# Health check to ensure data is loaded on startup
-print(f"--- NARRATIVE IQ BACKEND ---")
-print(f"Data Loaded: {len(agent.analysis_data)} narrative chunks")
-print(f"Status: Operational")
+
+def get_agent() -> WriterCritiqueAgent:
+    """
+    Lazily initialize the heavy agent so the API can boot cleanly on a VM
+    before the first analysis request arrives.
+    """
+    global _agent
+    if _agent is None:
+        _agent = WriterCritiqueAgent()
+        print("--- NARRATIVE IQ BACKEND ---")
+        print(f"Data Loaded: {len(_agent.analysis_data)} narrative chunks")
+        print("Status: Operational")
+    return _agent
 
 class AnalysisRequest(BaseModel):
     text: str
@@ -39,9 +49,14 @@ class RewriteRequest(BaseModel):
 def read_root():
     return {"status": "NarrativeIQ API is active"}
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.post("/analyze")
 async def analyze(request: AnalysisRequest):
     try:
+        agent = get_agent()
         result = agent.analyze_and_critique(request.text, language=request.language)
         # Ensure we return a successful flat structure for the frontend
         return {
@@ -66,6 +81,7 @@ async def analyze(request: AnalysisRequest):
 @app.post("/rewrite")
 async def rewrite(request: RewriteRequest):
     try:
+        agent = get_agent()
         benchmark = {"text": request.benchmark_text, "chunk_id": request.benchmark_id}
         result = agent.generate_rewrite(
             request.text,

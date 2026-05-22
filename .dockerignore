@@ -1,0 +1,11 @@
+.git
+.gitignore
+.vscode
+venv
+__pycache__
+*.pyc
+frontend/.next
+frontend/node_modules
+frontend/out
+.env
+.env.local
