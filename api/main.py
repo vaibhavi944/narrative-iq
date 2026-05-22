@@ -20,6 +20,11 @@ app.add_middleware(
 
 agent = WriterCritiqueAgent()
 
+# Health check to ensure data is loaded on startup
+print(f"--- NARRATIVE IQ BACKEND ---")
+print(f"Data Loaded: {len(agent.analysis_data)} narrative chunks")
+print(f"Status: Operational")
+
 class AnalysisRequest(BaseModel):
     text: str
     language: str
@@ -70,3 +75,8 @@ async def rewrite(request: RewriteRequest):
         return {"success": True, "rewrite": result}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
