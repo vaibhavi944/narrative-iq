@@ -43,6 +43,9 @@ class WriterCritiqueAgent:
         self.current_key_index = 0
         self.model = "llama-3.3-70b-versatile"
         
+        # Blocklist for known corrupted chunks
+        self.BLOCKED_CHUNK_IDS = {"mar_021_02", "mar_021_01", "mar_021_03"}
+        
         # Cache for analysis dataset to allow for fast lookup of labels
         self.analysis_db_path = "data/processed/full_narrative_analysis.json"
         self._analysis_data = None
@@ -115,14 +118,50 @@ class WriterCritiqueAgent:
             attempts += 1
         return None
 
-    def _get_strong_example(self, query_text, top_k=10):
+    def _is_valid_chunk(self, chunk):
+        import re
+        
+        chunk_id = chunk.get("chunk_id", "")
+        
+        # Block known corrupted chunks directly
+        if chunk_id in self.BLOCKED_CHUNK_IDS:
+            return False
+        
+        text = chunk.get("text", "")
+        
+        # Must have minimum length
+        if len(text) < 80:
+            return False
+        
+        # No Cyrillic characters
+        if re.search(r'[\u0400-\u04FF]', text):
+            return False
+        
+        # No Chinese/Japanese/Korean characters
+        if re.search(r'[\u4E00-\u9FFF]', text):
+            return False
+        
+        # Must have at least 2 sentences
+        sentences = [s.strip() for s in 
+                    re.split(r'[.।?!]', text) if s.strip()]
+        if len(sentences) < 2:
+            return False
+        
+        # Must have minimum word count
+        words = text.split()
+        if len(words) < 15:
+            return False
+        
+        return True
+
+    def _get_strong_example(self, query_text, language="english", top_k=50):
         """
         Retrieves the most semantically similar 'Strong' example
-        from the reference dataset.
+        in the TARGET LANGUAGE from the reference dataset.
         """
         # 1. Get raw similar chunks
         try:
-            results = retrieve_similar_chunks(query_text, top_k=top_k)
+            results = retrieve_similar_chunks(query_text, top_k=50)
         except Exception as e:
             print(f"Retrieval error: {e}")
             return None
@@ -130,16 +169,46 @@ class WriterCritiqueAgent:
         if not results:
             return None
 
-        # 2. Filter for 'Strong' label using the analysis database
+        # 2. Filter for 'Strong' label AND matching language AND valid quality
         for res in results:
             chunk_id = res.get("chunk_id")
             if chunk_id in self.analysis_data:
                 bench = self.analysis_data[chunk_id]
-                if bench.get("label") == "Strong":
+                is_strong = bench.get("label") == "Strong"
+                is_lang_match = bench.get("language", "").lower() == language.lower()
+                is_valid = self._is_valid_chunk(bench)
+                
+                if is_strong and is_lang_match and is_valid:
                     return self._normalize_chunk(bench)
         
-        # Fallback: if no Strong found in top-k, return the first result normalized
-        return self._normalize_chunk(results[0])
+        # 3. Fallback: If no Strong match in target language, find ANY valid match in target language
+        for res in results:
+            if res.get("language", "").lower() == language.lower() and self._is_valid_chunk(res):
+                return self._normalize_chunk(res)
+        
+        # 4. Final fallback: pick best valid Strong chunk in target language by score
+        lang_strong_chunks = [
+            v for v in self.analysis_data.values()
+            if v.get("language", "").lower() == language.lower()
+            and v.get("label") == "Strong"
+            and self._is_valid_chunk(v)
+        ]
+        if lang_strong_chunks:
+            best = max(lang_strong_chunks, key=lambda x: x.get("combined_score", 0))
+            return self._normalize_chunk(best)
+
+        # 5. Absolute last fallback: return the highest scoring valid Hindi chunk
+        # (as an emergency fallback for Marathi/English if nothing else is found)
+        all_strong = [
+            v for v in self.analysis_data.values()
+            if v.get("label") == "Strong"
+            and self._is_valid_chunk(v)
+        ]
+        if all_strong:
+            best = max(all_strong, key=lambda x: x.get("combined_score", 0))
+            return self._normalize_chunk(best)
+
+        return None
 
     def analyze_and_critique(self, text, language="english"):
         """
@@ -154,7 +223,7 @@ class WriterCritiqueAgent:
         # 1. Analyze User Input
         try:
             score_result = score_paragraph(text, language=language)
-            feedback = generate_feedback(score_result)
+            feedback = generate_feedback(score_result, language=language)
         except Exception as e:
             print(f"Internal Analysis Error: {e}")
             return {
@@ -162,14 +231,15 @@ class WriterCritiqueAgent:
                 "agent_critique": "Unable to perform narrative analysis at this time."
             }
         
-        # 2. Retrieve a "Strong" Benchmark
-        benchmark = self._get_strong_example(text)
+        # 2. Retrieve a "Strong" Benchmark in the SAME language
+        benchmark = self._get_strong_example(text, language=language)
         
         # 3. Generate Comparative Critique using LLM
         critique = self._generate_comparative_reasoning(
             user_text=text,
             user_score=score_result,
-            benchmark=benchmark
+            benchmark=benchmark,
+            language=language
         )
         
         return {
@@ -179,44 +249,88 @@ class WriterCritiqueAgent:
             "agent_critique": critique
         }
 
-    def _generate_comparative_reasoning(self, user_text, user_score, benchmark):
+    def _generate_comparative_reasoning(self, user_text, user_score, benchmark, language="english"):
         """
-        Uses LLM to compare the user's text with a benchmark and
-        explain the qualitative difference.
+        Uses LLM to compare the user's text with a benchmark.
+        CRITICAL: This method has a ZERO-TOLERANCE policy for English when another language is selected.
         """
         if not benchmark:
-            return "Unable to retrieve benchmark examples, but local narrative analysis completed successfully."
+            return "Unable to retrieve benchmark."
 
-        # Double check benchmark text
-        if not benchmark.get("text"):
-            return "Retrieved benchmark was malformed. Unable to perform comparative analysis."
+        lang_map = {
+            "english": "ENGLISH",
+            "hindi": "HINDI",
+            "marathi": "MARATHI"
+        }
+        target_lang = lang_map.get(language, "ENGLISH")
 
+        # The prompt is now a direct order with high penalty for English
         prompt = f"""You are a master literary editor. 
-Compare the USER'S PARAGRAPH with the BENCHMARK PARAGRAPH (which is rated as 'Strong' in our quality index).
+You must analyze the USER'S PARAGRAPH against the BENCHMARK.
 
-USER'S PARAGRAPH:
+USER'S PARAGRAPH: "{user_text}"
+BENCHMARK PARAGRAPH: "{benchmark.get('text', '')}"
+
+INSTRUCTIONS:
+1. Explain what the BENCHMARK does better regarding rhythm and word choice.
+2. Give 3 actionable steps to improve the USER'S PARAGRAPH.
+
+!!! ABSOLUTE REQUIREMENT !!!
+YOUR ENTIRE RESPONSE MUST BE WRITTEN IN {target_lang}. 
+- IF LANGUAGE IS HINDI, EVERY SINGLE WORD MUST BE HINDI.
+- IF LANGUAGE IS MARATHI, EVERY SINGLE WORD MUST BE MARATHI.
+- DO NOT USE ENGLISH TERMS LIKE 'Rhythm', 'Pacing', or 'Actionable Steps'. TRANSLATE THEM.
+- DO NOT USE ENGLISH HEADERS.
+- FAILURE TO COMPLY WILL RESULT IN SYSTEM ERROR.
+
+FORMAT (use {target_lang} for all text including headers):
+Write a short paragraph analyzing what the benchmark does better.
+Then write exactly 3 numbered improvement steps.
+No markdown. No mixed languages. Everything in {target_lang} only."""
+
+        return self._call_groq_with_rotation(prompt)
+
+    def generate_rewrite(self, user_text, benchmark, language="english"):
+        lang_map = {
+            "english": "ENGLISH",
+            "hindi": "HINDI",
+            "marathi": "MARATHI"
+        }
+        target_lang = lang_map.get(language, "ENGLISH")
+        
+        # Build language instruction dynamically
+        if language == "hindi":
+            lang_instruction = "Write ONLY in Hindi Devanagari script. Every single word must be Hindi. No English words at all."
+        elif language == "marathi":
+            lang_instruction = "Write ONLY in Marathi Devanagari script. Every single word must be Marathi. No English words at all."
+        else:
+            lang_instruction = f"Write ONLY in {target_lang}."
+
+        benchmark_text = benchmark.get("text", "") if benchmark else ""
+        
+        prompt = f"""You are a master literary editor who rewrites weak prose.
+
+USER'S ORIGINAL TEXT:
 "{user_text}"
-- Pacing Score: {user_score.get('pacing', {}).get('pacing_score', 0.0)}
-- Repetition Score: {user_score.get('repetition', {}).get('repetition_score', 0.0)}
-- Key Issues: {', '.join(user_score.get('reasons', [])) if user_score.get('reasons') else 'No major issues'}
 
-BENCHMARK PARAGRAPH (Quality Reference):
-"{benchmark.get('text', '')}"
-- Why it is Strong: {', '.join(benchmark.get('reasons', [])) if benchmark.get('reasons') else 'Well-balanced rhythm and clarity'}
+STYLE REFERENCE (how good writing looks):
+"{benchmark_text}"
 
 YOUR TASK:
-1. Explain specifically what the BENCHMARK does better in terms of rhythm, word choice, or emotional impact.
-2. Provide 2-3 specific, actionable steps for the user to transform their paragraph to match this quality level.
-3. Be encouraging but critically precise.
+Rewrite the user's original text to make it stronger.
+Fix these issues: repetitive sentence starts, flat emotion, monotonous pacing.
+Keep the same meaning and story. Just make it better written.
+Make it feel natural and human, not robotic.
+Use simple vocabulary that any reader can understand.
 
-Return your response as a clean, structured critique. No preamble. No JSON."""
+CRITICAL RULES - MUST FOLLOW:
+- {lang_instruction}
+- Do not mix languages under any circumstance.
+- Do not add any explanation or headers.
+- Just the rewritten paragraph directly.
+- Nothing else."""
 
-        critique = self._call_groq_with_rotation(prompt)
-        
-        if not critique:
-            return "Critique generation was interrupted by API constraints. Local analysis suggests: " + user_score.get('label', 'Moderate')
-            
-        return critique
+        return self._call_groq_with_rotation(prompt)
 
 # ---------------------------------------------------------
 # Local CLI Testing

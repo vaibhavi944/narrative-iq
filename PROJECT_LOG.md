@@ -186,16 +186,65 @@ Shifted from preprocessing to building the core reasoning layer of NarrativeIQ.
     - **Model Fallback:** Confirmed seamless transition to **Gemini 1.5 Pro** when Groq limits were reached, maintaining reasoning depth.
 - **Status:** Intelligence layer certified for production deployment.
 
+## Phase 6 — Quality Stabilization & Localization (2026-05-22)
+Focused on refining the user experience, ensuring 100% multilingual integrity, and hardening the RAG-driven feedback loop.
+
+### 1. UI Persistence & Session State
+- **Failure:** The "Suggested Rewrite" button and results would disappear immediately after clicking. This occurred because Streamlit reruns the script on every interaction, losing temporary local variables.
+- **Fix:** Refactored `app.py` to use `st.session_state`. 
+    - All analysis results, input parameters, and rewrite outputs are now stored in the session.
+    - Results are displayed outside the "Analyze" button block, ensuring they remain visible even when secondary buttons (like Rewrite) are clicked.
+    - Implemented `st.session_state.rewrite_result = ""` at the start of new analyses to prevent stale results from persisting across different texts.
+
+### 2. Eliminating Language Mixing
+- **Failure:** Even when Hindi or Marathi was selected, the AI would return headers (e.g., "Actionable Steps") or benchmark critiques in English. The "Delta" labels (Strong/Moderate/Weak) were also stuck in English.
+- **Fix (Prompt Engineering):** Upgraded `WriterCritiqueAgent` with an aggressive "Zero-Tolerance" prompt.
+    - Explicit instructions: "YOUR ENTIRE RESPONSE MUST BE IN [LANGUAGE]. DO NOT USE ANY ENGLISH. FAILURE TO COMPLY WILL RESULT IN SYSTEM ERROR."
+    - Dynamic language instructions: Added specific requirements for "Hindi Devanagari script" and "Marathi Devanagari script" to prevent the model from using Romanized text.
+- **Fix (UI/Logic Localization):** 
+    - Created `src/utils/language_utils.py` to hardcode all UI strings (headers, metrics, button labels).
+    - Updated `feedback_generator.py` to localize the qualitative labels (e.g., "Strong" -> "मजबूत" / "मजबूत").
+    - Ensured the `language` parameter is passed through every layer (Agent -> Scorer -> Feedback Gen).
+
+### 3. RAG Benchmark Integrity
+- **Failure:** Hindi/Marathi queries often returned English benchmarks. This happened because English stories (2,400+) vastly outnumbered Indic stories (96), dominating the semantic vector space. Some benchmarks also returned "corrupted" text containing Russian or Chinese characters.
+- **Fix (Filtering):** 
+    - Increased retrieval `top_k` from 20 to 50 to cast a wider net for minority languages.
+    - Implemented a **Hard Language Filter** in `WriterCritiqueAgent`: any benchmark not matching the user's selected language is rejected.
+- **Fix (Quality Validation):** 
+    - Added `_is_valid_chunk()` to the agent.
+    - **Length Check:** Minimum 50 characters to avoid useless fragments.
+    - **Script Check:** Regex filter to reject Cyrillic (Russian) or CJK (Chinese/Japanese/Korean) characters which indicated corrupted synthetic data.
+- **Fix (Emergency Fallback):** If no valid benchmark is found in the target language within the search results, the system now scans the entire `analysis_data` for the **highest-scoring valid Strong chunk** in that language as a safety measure.
+
+### 4. Data Cleanup
+- **Issue:** `story_050.txt` in the Hindi dataset was identified as corrupted during manual testing.
+- **Fix:** Deleted the corrupted file and regenerated a fresh 3-paragraph Hindi story using a specialized Groq prompt to ensure pure Devanagari script.
+
+## Phase 7 — Permanent Data Purge (2026-05-22)
+Applied a permanent fix for corrupted Marathi chunks that were bypassing semantic filters.
+
+### 1. Hardcoded Blocklist & Strict Validation
+- **Failure:** Specific corrupted chunks (e.g., `mar_021_02`) continued to appear as benchmarks despite previous regex filters.
+- **Fix (Agent Logic):** 
+    - Added `BLOCKED_CHUNK_IDS` set to `WriterCritiqueAgent` to explicitly reject known bad IDs.
+    - Enhanced `_is_valid_chunk()` with stricter criteria:
+        - Minimum length increased to 80 characters.
+        - Mandatory check for at least 2 sentences (using `re.split(r'[.।?!]')`).
+        - Minimum word count of 15.
+- **Fix (Data Purge):** Physically deleted entries `mar_021_01`, `mar_021_02`, and `mar_021_03` from both `full_narrative_analysis.json` and `tagged_chunks_final.json`. This ensures they can never be loaded into memory or retrieved.
+
 ---
 
 # Core Technologies
 
+- **UI Framework**: Streamlit (with advanced Session State management)
 - **Sentence Transformers**: `multilingual-e5-base`
 - **FAISS**: `IndexFlatL2`
-- **Groq**: `llama-3.3-70b-versatile` & `llama-3.1-8b-instant`
-- **Python Stack**: NumPy, Pickle, NLTK, Scikit-learn
+- **Groq**: `llama-3.3-70b-versatile` (Master Editor / Rewriter)
+- **Python Stack**: NumPy, Pickle, NLTK, Regex
 - **Dataset**: TinyStories (English) + Synthetic Indic (Hindi/Marathi)
 
 ---
 
-*Current Project State: The multilingual semantic retrieval backbone is fully operational and validated.*
+*Current Project State: The system is now UI-stable, language-consistent, and data-validated across all three supported languages.*
