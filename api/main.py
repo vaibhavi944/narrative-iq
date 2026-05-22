@@ -61,7 +61,7 @@ async def analyze(request: AnalysisRequest):
         # Ensure we return a successful flat structure for the frontend
         return {
             "success": True,
-            "score": result["analysis"]["writing_strength"],
+            "score": result["analysis"]["combined_score"],
             "label": result["analysis"]["label"],
             "summary": result["feedback"]["summary"],
             "tips": result["feedback"]["tips"],
@@ -71,9 +71,9 @@ async def analyze(request: AnalysisRequest):
                 "genre": result["benchmark_example"]["genre"],
                 "chunk_id": result["benchmark_example"]["chunk_id"]
             } if result.get("benchmark_example") else None,
-            "pacing_score": result["analysis"]["pacing"],
-            "repetition_score": result["analysis"]["repetition"],
-            "emotion_score": result["analysis"]["emotion"]
+            "pacing_score": result["analysis"]["pacing"]["pacing_score"],
+            "repetition_score": result["analysis"]["repetition"]["repetition_score"],
+            "emotion_score": result["analysis"]["emotion"]["emotion_score"]
         }
     except Exception as e:
         return {"success": False, "error": str(e)}

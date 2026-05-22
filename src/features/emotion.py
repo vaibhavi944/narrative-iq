@@ -15,18 +15,27 @@ from transformers import pipeline
 
 print("Initializing local emotion analysis pipeline...")
 MODEL_ID = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
+sentiment_pipeline = None
 
-try:
-    # Initialize globally for performance
-    sentiment_pipeline = pipeline(
-        "sentiment-analysis",
-        model=MODEL_ID,
-        tokenizer=MODEL_ID
-    )
-    print(f"Model '{MODEL_ID}' loaded successfully.")
-except Exception as e:
-    print(f"Error loading local model: {e}")
-    sentiment_pipeline = None
+
+def get_sentiment_pipeline():
+    """
+    Lazy-load the sentiment model so the app boots faster and avoids
+    unnecessary startup pressure on free hosting.
+    """
+    global sentiment_pipeline
+    if sentiment_pipeline is None:
+        try:
+            sentiment_pipeline = pipeline(
+                "sentiment-analysis",
+                model=MODEL_ID,
+                tokenizer=MODEL_ID
+            )
+            print(f"Model '{MODEL_ID}' loaded successfully.")
+        except Exception as e:
+            print(f"Error loading local model: {e}")
+            sentiment_pipeline = False
+    return sentiment_pipeline
 
 def get_emotion_score(paragraph, language="english"):
     """
@@ -38,7 +47,8 @@ def get_emotion_score(paragraph, language="english"):
     intensity = 0.5
     label = "Neutral"
 
-    if not sentiment_pipeline:
+    model_pipeline = get_sentiment_pipeline()
+    if not model_pipeline:
         return {
             "polarity": 0.0,
             "intensity": 0.5,
@@ -49,7 +59,7 @@ def get_emotion_score(paragraph, language="english"):
     try:
         # Step 1: Inference
         # Model returns: [{'label': 'Positive'/'Negative'/'Neutral', 'score': 0.99}]
-        result = sentiment_pipeline(paragraph[:512])[0] # Truncate for model safety
+        result = model_pipeline(paragraph[:512])[0] # Truncate for model safety
         
         model_label = result["label"]
         confidence = result["score"]

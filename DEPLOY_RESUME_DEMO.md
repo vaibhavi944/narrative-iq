@@ -1,133 +1,114 @@
-# NarrativeIQ Demo Deployment Guide
+# NarrativeIQ Free Demo Deployment
 
-This branch is prepared for a single-VM deployment so the frontend and backend
-keep working together without changing the core AI/ML pipeline.
+This branch is prepared for a free split deployment:
 
-## What This Branch Preserves
+- Frontend on Vercel
+- Backend on Hugging Face Spaces using Docker
 
-- The existing FastAPI backend
-- The existing Next.js frontend
-- The current `src/` AI/ML pipeline
-- The local workflow you already use
+This is the easiest no-card path that stays close to your localhost app.
 
-## What Changed On This Branch
+## What Stays The Same
 
-- Added Docker packaging for frontend and backend
-- Added Caddy as a reverse proxy so one domain serves both apps
-- Added backend lazy initialization to make startup less brittle
-- Added same-origin API fallback so deployed frontend can call the backend
+- Same Next.js frontend
+- Same FastAPI backend
+- Same `src/` AI/ML pipeline
+- Same `/analyze` and `/rewrite` API flow
 
-## Recommended Free Hosting Path
+## What Is Different From Localhost
 
-Use an Oracle Cloud Always Free VM and run this branch with Docker Compose.
+- The frontend and backend use different public URLs
+- The frontend calls the live backend URL instead of `http://localhost:8000`
+- The backend may be slower on the first request after inactivity
 
-Why this path:
+## Why This Path
 
-- It can stay up for months
-- It supports your current heavier Python runtime better than free serverless
-- It avoids splitting frontend and backend across two fragile free services
+- Vercel is the easiest free host for your existing Next.js frontend
+- Hugging Face Spaces supports Docker and offers free `CPU Basic` hardware
+- This avoids Oracle VM setup and avoids adding a credit card to a service like Northflank or Koyeb
 
-## 1. Create the VM
+## 1. Deploy The Frontend To Vercel
 
-Create an Oracle Cloud Always Free Ubuntu VM.
-
-Recommended minimum setup:
-
-- Ubuntu 22.04 or 24.04
-- Public IP enabled
-- Ports `80`, `443`, and `22` opened in Oracle security rules
-
-## 2. Install Docker
-
-SSH into the VM and run:
+Push this branch first:
 
 ```bash
-sudo apt update
-sudo apt install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo usermod -aG docker $USER
-newgrp docker
+git push origin demo/resume-deploy
 ```
 
-## 3. Upload the Repo
+Then in Vercel:
 
-On the VM:
+1. Import your GitHub repo
+2. Set the Root Directory to `frontend`
+3. Do not deploy yet if you don't know the backend URL
 
-```bash
-git clone <your-repo-url>
-cd narrative-iq
-git checkout demo/resume-deploy
+## 2. Create The Backend On Hugging Face Spaces
+
+Create a new public Space on Hugging Face:
+
+- SDK: `Docker`
+- Space name: for example `narrativeiq-backend`
+
+Then create a separate backend repo for the Space by copying these items from this project into the Space repo root:
+
+- `api/`
+- `src/`
+- `data/`
+- `requirements.txt`
+- files from [hf-space-template](/abs/path/C:/Users/vaibh/ai_projects/narrative-iq/hf-space-template)
+
+The template folder gives you the `Dockerfile` and `README.md` needed by the Space.
+
+## 3. Add Backend Secret On Hugging Face
+
+In your Space settings, add this secret:
+
+- `GROQ_API_KEY_1`
+
+Use your real Groq key as the value.
+
+If you use more than one key locally, you can also add:
+
+- `GROQ_API_KEY_2`
+- `GROQ_API_KEY_3`
+
+## 4. Wait For The Space To Build
+
+When the Space finishes building, it will have a URL like:
+
+```text
+https://your-username-narrativeiq-backend.hf.space
 ```
 
-## 4. Create the Environment File
+Check health:
 
-Create `.env` in the repo root:
-
-```env
-GROQ_API_KEY_1=your_key_here
-CADDY_HOST=your-domain.com
+```text
+https://your-username-narrativeiq-backend.hf.space/health
 ```
 
-If you do not have a custom domain yet, use:
-
-```env
-GROQ_API_KEY_1=your_key_here
-CADDY_HOST=localhost
-```
-
-For public use, a real domain is better because Caddy can automatically create HTTPS.
-
-## 5. Start the Stack
-
-```bash
-docker compose up -d --build
-```
-
-## 6. Check Health
-
-```bash
-docker compose ps
-docker compose logs backend --tail=100
-docker compose logs frontend --tail=100
-docker compose logs caddy --tail=100
-curl http://localhost/health
-```
-
-Expected result:
+You want:
 
 ```json
 {"status":"ok"}
 ```
 
-## 7. Optional Domain Setup
+## 5. Finish Vercel Frontend Setup
 
-Point your domain's DNS `A` record to the VM public IP.
-
-Then set:
+In your Vercel project environment variables, add:
 
 ```env
-CADDY_HOST=your-domain.com
+NEXT_PUBLIC_API_URL=https://your-username-narrativeiq-backend.hf.space
 ```
 
-Restart:
+Then deploy the frontend.
 
-```bash
-docker compose up -d
-```
+## 6. Test The Live App
 
-Caddy will handle HTTPS automatically after DNS is correct.
+Open the Vercel URL and test:
 
-## Local Development Still Works
+- analyze flow
+- rewrite flow
+- language switching
 
-Your existing local setup is still valid.
+## Localhost Still Works
 
 Backend:
 
@@ -143,10 +124,17 @@ npm install
 npm run dev
 ```
 
-The frontend still uses `http://localhost:8000` automatically when running on localhost.
+Your local frontend still uses `http://localhost:8000` automatically.
 
-## Notes
+## Important Limits
 
-- The first retrieval request may be slower because the sentence-transformer model may need to download into the Hugging Face cache volume.
-- Free serverless hosts are still likely to fail on this backend because of runtime size and memory usage.
-- This branch is for deployment stability. Your original development snapshot was preserved separately before these changes.
+- Hugging Face free Spaces can sleep after inactivity on free hardware
+- The first request after a sleep can be slower
+- This is still much better for your no-card requirement than trying to force the backend onto small free serverless containers
+
+## Rollback
+
+Your exact preserved snapshot is:
+
+- Branch: `pre-demo-snapshot-2026-05-22`
+- Commit: `97560627672de09f8ba5b9671d2d9a310ae2586d`
