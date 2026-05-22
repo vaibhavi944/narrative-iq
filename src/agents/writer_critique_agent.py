@@ -250,85 +250,63 @@ class WriterCritiqueAgent:
         }
 
     def _generate_comparative_reasoning(self, user_text, user_score, benchmark, language="english"):
-        """
-        Uses LLM to compare the user's text with a benchmark.
-        CRITICAL: This method has a ZERO-TOLERANCE policy for English when another language is selected.
-        """
-        if not benchmark:
-            return "Unable to retrieve benchmark."
-
-        lang_map = {
-            "english": "ENGLISH",
-            "hindi": "HINDI",
-            "marathi": "MARATHI"
-        }
+        """Generates concise editorial insights strictly in the target language."""
+        if not benchmark: return "Unable to find a comparison for this scene."
+        
+        lang_map = {"english": "ENGLISH", "hindi": "HINDI", "marathi": "MARATHI"}
         target_lang = lang_map.get(language, "ENGLISH")
 
-        # The prompt is now a direct order with high penalty for English
-        prompt = f"""You are a master literary editor. 
-You must analyze the USER'S PARAGRAPH against the BENCHMARK.
+        prompt = f"""You are a master developmental editor. 
+Observe the USER'S SCENE and compare it to a HIGH-QUALITY REFERENCE in terms of narrative density and flow.
 
-USER'S PARAGRAPH: "{user_text}"
-BENCHMARK PARAGRAPH: "{benchmark.get('text', '')}"
+USER'S SCENE: "{user_text}"
+REFERENCE SCENE: "{benchmark.get('text', '')}"
 
-INSTRUCTIONS:
-1. Explain what the BENCHMARK does better regarding rhythm and word choice.
-2. Give 3 actionable steps to improve the USER'S PARAGRAPH.
+YOUR TASK:
+Provide exactly 3 professional editorial observations that highlight the gap between the two.
+- Observation 1: Focus on Narrative Density (show vs tell).
+- Observation 2: Focus on Flow/Rhythm (sentence variety).
+- Observation 3: Focus on Emotional Grounding.
 
 !!! ABSOLUTE REQUIREMENT !!!
-YOUR ENTIRE RESPONSE MUST BE WRITTEN IN {target_lang}. 
-- IF LANGUAGE IS HINDI, EVERY SINGLE WORD MUST BE HINDI.
-- IF LANGUAGE IS MARATHI, EVERY SINGLE WORD MUST BE MARATHI.
-- DO NOT USE ENGLISH TERMS LIKE 'Rhythm', 'Pacing', or 'Actionable Steps'. TRANSLATE THEM.
-- DO NOT USE ENGLISH HEADERS.
-- FAILURE TO COMPLY WILL RESULT IN SYSTEM ERROR.
+YOUR ENTIRE RESPONSE MUST BE IN {target_lang}. 
+NO ENGLISH HEADERS. NO MIXED LANGUAGES.
 
-FORMAT (use {target_lang} for all text including headers):
-Write a short paragraph analyzing what the benchmark does better.
-Then write exactly 3 numbered improvement steps.
-No markdown. No mixed languages. Everything in {target_lang} only."""
+FORMAT (in {target_lang}):
+→ [Observation 1]
+→ [Observation 2]
+→ [Observation 3]"""
 
         return self._call_groq_with_rotation(prompt)
 
     def generate_rewrite(self, user_text, benchmark, language="english"):
-        lang_map = {
-            "english": "ENGLISH",
-            "hindi": "HINDI",
-            "marathi": "MARATHI"
-        }
+        """Generates a careful refinement that preserves the writer's voice."""
+        lang_map = {"english": "ENGLISH", "hindi": "HINDI", "marathi": "MARATHI"}
         target_lang = lang_map.get(language, "ENGLISH")
         
-        # Build language instruction dynamically
         if language == "hindi":
-            lang_instruction = "Write ONLY in Hindi Devanagari script. Every single word must be Hindi. No English words at all."
+            lang_instruction = "Write ONLY in Hindi Devanagari script."
         elif language == "marathi":
-            lang_instruction = "Write ONLY in Marathi Devanagari script. Every single word must be Marathi. No English words at all."
+            lang_instruction = "Write ONLY in Marathi Devanagari script."
         else:
             lang_instruction = f"Write ONLY in {target_lang}."
 
-        benchmark_text = benchmark.get("text", "") if benchmark else ""
-        
-        prompt = f"""You are a master literary editor who rewrites weak prose.
+        prompt = f"""You are a master developmental editor.
+RETIRE the user's prose by tightening its impact and removing narrative friction.
 
-USER'S ORIGINAL TEXT:
-"{user_text}"
+STRICT GROUNDING RULE:
+- DO NOT invent new characters, locations, or major plot points.
+- DO NOT use excessive flowery metaphors unless the user already used them.
+- PRESERVE the user's specific details exactly.
+- TIGHTEN the sentences.
 
-STYLE REFERENCE (how good writing looks):
-"{benchmark_text}"
+USER'S ORIGINAL TEXT: "{user_text}"
+STYLE REFERENCE: "{benchmark.get('text', '') if benchmark else ''}"
 
-YOUR TASK:
-Rewrite the user's original text to make it stronger.
-Fix these issues: repetitive sentence starts, flat emotion, monotonous pacing.
-Keep the same meaning and story. Just make it better written.
-Make it feel natural and human, not robotic.
-Use simple vocabulary that any reader can understand.
-
-CRITICAL RULES - MUST FOLLOW:
+CRITICAL RULES:
 - {lang_instruction}
-- Do not mix languages under any circumstance.
-- Do not add any explanation or headers.
-- Just the rewritten paragraph directly.
-- Nothing else."""
+- No explanation. No quotes. No headers.
+- Return ONLY the refined paragraph directly."""
 
         return self._call_groq_with_rotation(prompt)
 

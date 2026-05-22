@@ -7,20 +7,28 @@ __pycache__/
 
 # Environment / secrets
 .env
+.env.local
 venv/
 .huggingface/
+
+# Next.js build artifacts
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+
+# Data - Ignore all large raw and processed data
+data/raw_stories/
+data/processed/*.json
+data/processed/*.pkl
+data/processed/*.faiss
+data/processed/*.txt
+
+# Keep ONLY the structure or example data if absolutely needed
+# !data/processed/tagged_chunks_final.json (Ignoring as it might be large)
 
 # Project notes / docs
 PROJECT_EXPLANATION.md
 docs/
 
-# Raw/Cleaned datasets
-data/cleaned/
-
-# Keep ONLY final tagged metadata JSON
-!data/processed/tagged_chunks_final.json
-
-# Ignore generated vector artifacts
-data/processed/*.pkl
-data/processed/*.faiss
-data/processed/tagged_chunks_progress.json
+# VS Code
+.vscode/
