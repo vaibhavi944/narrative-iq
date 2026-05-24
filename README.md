@@ -1,97 +1,91 @@
-# Narrative-IQ: The Multilingual Developmental Editor
+# Narrative-IQ: Multilingual RAG-Driven Editorial Engine
 
-**Narrative-IQ** is a sophisticated AI-powered developmental editor designed specifically for fiction writers. Unlike generic AI writing assistants, Narrative-IQ uses **Retrieval-Augmented Generation (RAG)** and **Comparative Reasoning** to help writers elevate their prose across **English, Hindi, and Marathi**.
+**Narrative-IQ** is a specialized narrative analysis and editorial system designed to provide deep, context-aware critiques for fiction writing. The core of the project is a sophisticated **Retrieval-Augmented Generation (RAG)** engine that understands narrative structure across **English, Hindi, and Marathi**.
 
-It doesn't just "fix" your writing; it acts as a mentor by comparing your work against thousands of high-quality literary benchmarks and providing specific, actionable editorial insights.
-
----
-
-## 🌟 The Vision: "Show, Don't Just Tell"
-Narrative-IQ was born from the need for an editor that understands the rhythm of storytelling. It focuses on three core pillars:
-1.  **Multilingual Depth:** Native understanding of English, Hindi, and Marathi scripts and styles.
-2.  **RAG-Driven Mentorship:** Comparative feedback based on a curated database of 2,600+ story chunks.
-3.  **Quiet Luxury UX:** A minimalist, distraction-free environment that puts the focus back on the manuscript.
+The system moves beyond simple grammar checking, employing semantic benchmarking to evaluate prose quality against verified high-quality literary datasets.
 
 ---
 
-## 🚀 Key Features
+## ⚙️ Core Architecture: The Editorial Engine
 
-### 1. Deep Narrative Analysis
-The system evaluates your prose through three distinct technical lenses:
-*   **Pacing & Rhythm:** Analyzes sentence length variance to detect staccato or monotonous flow.
-*   **Vocabulary Richness:** Uses Type-Token Ratio (TTR) to identify repetitive wording.
-*   **Emotional Resonance:** Employs a local NLP pipeline to map the emotional depth and variety of the scene.
+### 1. Narrative Intelligence & Scoring
+The engine processes raw text through a series of specialized feature extraction pipelines:
+*   **Pacing & Rhythm Logic:** Algorithmic analysis of sentence length variance to identify stylistic patterns (staccato, monotonous, or fluid).
+*   **Vocabulary & Density:** Measures Type-Token Ratio (TTR) and word variety to detect narrative friction and repetition.
+*   **Multilingual Emotion Pipeline:** A localized NLP system that maps emotional arcs and sentiment depth, calibrated specifically for each target language.
 
-### 2. The "Mentor" (Comparative RAG)
-This is the heart of Narrative-IQ. When you analyze a text:
-1.  **Semantic Search:** It uses the `multilingual-e5-base` model to find the most semantically similar "Strong" benchmark in our database.
-2.  **Benchmark Comparison:** It displays a high-quality reference scene side-by-side with your writing.
-3.  **Editor's Note:** Using **Llama 3.3 70B**, it generates a professional 3-point critique (Density, Flow, Emotion) explaining exactly why the benchmark is stronger.
-
-### 3. High-Fidelity Rewrites
-The "Show Better Version" feature doesn't just "clean up" text. It uses the benchmark's style to **elevate** your prose—adding sensory nuance, transforming "telling" into "showing," and improving rhythmic flow while strictly preserving your original plot and characters.
+### 2. Semantic RAG & Benchmarking
+The system's reasoning is grounded in a curated database of over 2,600 narrative chunks.
+*   **Vectorization:** Uses `multilingual-e5-base` to project multi-language prose into a unified semantic space.
+*   **Quality-Aware Retrieval:** A two-stage retrieval process that identifies the most semantically similar "Strong" benchmark for any given user scene.
+*   **Comparative Reasoning:** Powered by **Llama 3.3 70B**, the engine performs a side-by-side analysis, identifying the "density gap" between the user's prose and professional benchmarks.
 
 ---
 
-## 🛠️ The Technical Journey (How She Built It)
+## 🛠️ Technical Engineering Lifecycle
 
-This project was developed through an intensive 8-phase engineering cycle:
+The development of the engine followed a rigorous 8-phase implementation cycle:
 
-*   **Phase 1-2 (The Foundation):** Ingested TinyStories (English) and generated synthetic Indic stories (Hindi/Marathi) using Groq. Built the core feature extraction algorithms.
-*   **Phase 3-4 (The Brain):** Implemented a **FAISS Vector Store** for ultra-fast retrieval and developed the `WriterCritiqueAgent` to orchestrate analysis and comparative reasoning.
-*   **Phase 5 (The Quality Filter):** Upgraded to a "Quality-Aware" retrieval system, ensuring users are always compared against **verified Strong** benchmarks.
-*   **Phase 6-7 (The Polish):** Solved complex "Language Mixing" issues, ensuring 100% native Devanagari script for Hindi/Marathi critiques. Purged corrupted data to ensure 100% benchmark integrity.
-*   **Phase 8 (The Overhaul):** Transformed the UI into a "Quiet Luxury" aesthetic using a minimalist palette and premium typography (Newsreader, Geist, and Mukta).
-
----
-
-## 💻 Tech Stack
-
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend** | Next.js 15, React 19, TypeScript, Tailwind CSS |
-| **Backend** | FastAPI, Python 3.10+ |
-| **AI Models** | Groq (Llama 3.3 70B), Sentence Transformers (`multilingual-e5-base`) |
-| **Vector DB** | FAISS (IndexFlatL2) |
-| **Data Processing** | NumPy, Pickle, NLTK, Regex |
-| **UI Design** | "Quiet Luxury" palette, Serif-first typography |
+*   **Data Ingestion & Synthesis:** Curated the TinyStories dataset for English and generated high-quality synthetic benchmarks for Hindi and Marathi using Groq, ensuring a balanced multilingual foundation.
+*   **Semantic Memory Construction:** Built the vector store using **FAISS** (`IndexFlatL2`) and implemented a custom chunking strategy to maintain narrative integrity across different scripts.
+*   **Intelligence Layer:** Developed the `WriterCritiqueAgent` with a zero-tolerance language-locking prompt architecture to ensure 100% native output for Indic languages.
+*   **Optimization:** Implemented a re-ranking layer that prioritizes "Strong" benchmarks even when "Moderate" results are semantically closer, ensuring a high-quality feedback loop.
 
 ---
 
-## ⚙️ Setup & Installation
+## 📂 Project Structure (Core Engine)
 
-### Backend Setup
-1.  **Clone the repo:**
-    ```bash
-    git clone https://github.com/vaibhavi944/narrative-iq.git
-    cd narrative-iq
-    ```
-2.  **Environment:** Create a virtual environment and install requirements.
+```bash
+narrative-iq/
+├── api/
+│   └── main.py                 # FastAPI endpoints & Request Orchestration
+├── data/
+│   └── processed/              # FAISS Index, Metadata, & Analysis Database
+├── src/
+│   ├── agents/
+│   │   └── writer_critique_agent.py # Master AI reasoning & RAG coordination
+│   ├── rag/
+│   │   ├── embeddings.py       # E5 Vector generation pipeline
+│   │   ├── retriever.py        # Quality-aware search logic
+│   │   └── vector_store.py     # FAISS management
+│   ├── scoring/
+│   │   ├── weakness_scorer.py  # Multi-feature aggregation logic
+│   │   └── feedback_generator.py # Localized qualitative analysis
+│   ├── features/
+│   │   ├── pacing.py           # Rhythm & Variance analysis
+│   │   ├── repetition.py       # TTR & Vocabulary richness
+│   │   └── emotion.py          # Multilingual sentiment pipeline
+│   ├── pipelines/
+│   │   └── full_analysis_pipeline.py # Batch processing for intelligence DB
+│   └── utils/
+│       └── text_splitter.py    # Script-aware narrative chunking
+└── PROJECT_LOG.md              # Detailed engineering history
+```
+
+---
+
+## 🚀 System Setup
+
+### Backend & Engine
+1.  **Environment Preparation:**
     ```bash
     python -m venv venv
-    ./venv/Scripts/activate
+    source venv/bin/activate  # Windows: .\venv\Scripts\activate
     pip install -r requirements.txt
     ```
-3.  **Secrets:** Add your `GROQ_API_KEY` to a `.env` file.
-4.  **Run API:**
+2.  **Model Loading & Indexing:**
+    The system requires the FAISS index and analysis database to be present in `data/processed/`.
+3.  **API Execution:**
     ```bash
     uvicorn api.main:app --host 127.0.0.1 --port 8000
     ```
 
-### Frontend Setup
-1.  **Navigate to directory:** `cd frontend`
-2.  **Install:** `npm install`
-3.  **Run:** `npm run dev`
-4.  **Access:** Open [http://localhost:3000](http://localhost:3000)
+### Tech Stack Highlights
+*   **Inference:** Groq (Llama 3.3 70B) for high-speed narrative reasoning.
+*   **Embeddings:** `multilingual-e5-base` for cross-language semantic bridge-building.
+*   **Vector DB:** FAISS (Facebook AI Similarity Search).
+*   **Language Support:** English (Standard), Hindi (Devanagari), Marathi (Devanagari).
 
 ---
 
-## 🎨 Design Philosophy: "Quiet Luxury"
-Narrative-IQ uses a carefully curated visual language:
-*   **Palette:** Off-white surfaces (`#fafaf8`) with Charcoal text (`#1a1a18`) and Indigo accents (`#4338ca`).
-*   **Typography:** **Newsreader** for a classic book-like feel, **Geist** for crisp metadata, and **Mukta** for natural Devanagari ligatures.
-*   **Focus:** A "Zen" editor mode that hides complexity until you ask for an editorial review.
-
----
-
-**Narrative-IQ** — *Elevating the world's stories, one language at a time.*
+**Narrative-IQ** — *Advanced Multilingual Narrative Analysis*
