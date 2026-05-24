@@ -280,7 +280,7 @@ FORMAT (in {target_lang}):
         return self._call_groq_with_rotation(prompt)
 
     def generate_rewrite(self, user_text, benchmark, language="english"):
-        """Generates a careful refinement that preserves the writer's voice."""
+        """Generates a careful refinement that elevates the writer's prose to match the benchmark quality."""
         lang_map = {"english": "ENGLISH", "hindi": "HINDI", "marathi": "MARATHI"}
         target_lang = lang_map.get(language, "ENGLISH")
         
@@ -291,14 +291,18 @@ FORMAT (in {target_lang}):
         else:
             lang_instruction = f"Write ONLY in {target_lang}."
 
-        prompt = f"""You are a master developmental editor.
-RETIRE the user's prose by tightening its impact and removing narrative friction.
+        prompt = f"""You are a master developmental editor. 
+Your goal is to transform the USER'S ORIGINAL TEXT into a high-quality narrative that matches the depth and flow of the STYLE REFERENCE.
 
 STRICT GROUNDING RULE:
-- DO NOT invent new characters, locations, or major plot points.
-- DO NOT use excessive flowery metaphors unless the user already used them.
-- PRESERVE the user's specific details exactly.
-- TIGHTEN the sentences.
+- KEEP the core facts, characters, and setting of the USER'S ORIGINAL TEXT.
+- DO NOT change the plot or invent new external events.
+
+EDITORIAL DIRECTION:
+- ELEVATE the prose. Use more descriptive and active verbs.
+- Add sensory nuance (sounds, textures, subtle emotions) without losing the user's intent.
+- Improve the RHYTHMIC FLOW by varying sentence length and complexity, emulating the STYLE REFERENCE.
+- If the original is "telling," transform it into "showing" where possible.
 
 USER'S ORIGINAL TEXT: "{user_text}"
 STYLE REFERENCE: "{benchmark.get('text', '') if benchmark else ''}"
@@ -306,7 +310,7 @@ STYLE REFERENCE: "{benchmark.get('text', '') if benchmark else ''}"
 CRITICAL RULES:
 - {lang_instruction}
 - No explanation. No quotes. No headers.
-- Return ONLY the refined paragraph directly."""
+- Return ONLY the refined, elevated paragraph directly."""
 
         return self._call_groq_with_rotation(prompt)
 
