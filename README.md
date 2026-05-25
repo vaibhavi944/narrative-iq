@@ -34,7 +34,7 @@ LLM Agent (Groq llama-3.3-70b-versatile)
 Comparative critique + Language-matched rewrite
          |
          v
-FastAPI Response / Streamlit UI
+FastAPI Response / Next.js UI
 ```
 
 ## Tech Stack
@@ -46,7 +46,7 @@ FastAPI Response / Streamlit UI
 | Embeddings | intfloat/multilingual-e5-base | Single model for all 3 languages |
 | Vector Store | FAISS IndexFlatL2 | Exact search, no cloud dependency |
 | API Layer | FastAPI | Async, lightweight, easy to extend |
-| UI | Streamlit | Fast to build, sufficient for demo |
+| UI | Next.js (React) | Modern, responsive, and production-ready |
 
 ## Key Design Decisions
 
@@ -140,11 +140,13 @@ python -m src.rag.embeddings
 python -m src.rag.vector_store
 python -m src.pipelines.full_analysis_pipeline
 
-# Run Streamlit UI
-streamlit run app.py
-
-# Or run FastAPI backend
+# Run FastAPI backend
 uvicorn api.main:app --reload --port 8000
+
+# Run Next.js UI (in frontend directory)
+cd frontend
+npm install
+npm run dev
 ```
 
 ## Project Structure
@@ -153,6 +155,10 @@ uvicorn api.main:app --reload --port 8000
 narrativeiq/
 ├── api/
 │   └── main.py                         # FastAPI endpoints
+├── frontend/                           # Next.js React application
+│   ├── app/                            # Pages and routing
+│   ├── components/                     # Reusable UI components
+│   └── package.json
 ├── src/
 │   ├── agents/
 │   │   └── writer_critique_agent.py    # RAG + LLM orchestration
@@ -180,7 +186,6 @@ narrativeiq/
 │   └── test_pipeline.py                # End to end pipeline test
 ├── docs/
 │   └── PROJECT_LOG.md                  # Full development log
-├── app.py                              # Streamlit UI
 ├── requirements.txt
 └── .env.example
 ```
@@ -195,6 +200,5 @@ See requirements.txt for full list.
 - nltk
 - fastapi
 - uvicorn
-- streamlit
 - datasets
 - python-dotenv
