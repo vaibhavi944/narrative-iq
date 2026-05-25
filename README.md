@@ -1,91 +1,200 @@
-# Narrative-IQ: Multilingual RAG-Driven Editorial Engine
+# NarrativeIQ
 
-**Narrative-IQ** is a specialized narrative analysis and editorial system designed to provide deep, context-aware critiques for fiction writing. The core of the project is a sophisticated **Retrieval-Augmented Generation (RAG)** engine that understands narrative structure across **English, Hindi, and Marathi**.
+NarrativeIQ is a creative writing analysis tool that provides comparative critique and rewrites for stories in English, Hindi, and Marathi.
 
-The system moves beyond simple grammar checking, employing semantic benchmarking to evaluate prose quality against verified high-quality literary datasets.
+Writing narrative prose is challenging because it requires balancing pacing, emotional depth, and vocabulary variety. NarrativeIQ solves this by providing literary-focused analysis rather than just basic grammar and spelling corrections. It identifies weaknesses in specific paragraphs and retrieves high-quality "Strong" benchmarks from its vector database to show how professional writers handle similar scenes. The output includes numerical scores for pacing, repetition, and emotion, along with human-readable tips and a language-matched rewrite of the user's text.
 
----
+## Architecture
 
-## ⚙️ Core Architecture: The Editorial Engine
+The system combines rule-based NLP heuristics with RAG-powered retrieval and LLM reasoning. Each layer has a specific job and can be understood and defended independently.
 
-### 1. Narrative Intelligence & Scoring
-The engine processes raw text through a series of specialized feature extraction pipelines:
-*   **Pacing & Rhythm Logic:** Algorithmic analysis of sentence length variance to identify stylistic patterns (staccato, monotonous, or fluid).
-*   **Vocabulary & Density:** Measures Type-Token Ratio (TTR) and word variety to detect narrative friction and repetition.
-*   **Multilingual Emotion Pipeline:** A localized NLP system that maps emotional arcs and sentiment depth, calibrated specifically for each target language.
-
-### 2. Semantic RAG & Benchmarking
-The system's reasoning is grounded in a curated database of over 2,600 narrative chunks.
-*   **Vectorization:** Uses `multilingual-e5-base` to project multi-language prose into a unified semantic space.
-*   **Quality-Aware Retrieval:** A two-stage retrieval process that identifies the most semantically similar "Strong" benchmark for any given user scene.
-*   **Comparative Reasoning:** Powered by **Llama 3.3 70B**, the engine performs a side-by-side analysis, identifying the "density gap" between the user's prose and professional benchmarks.
-
----
-
-## 🛠️ Technical Engineering Lifecycle
-
-The development of the engine followed a rigorous 8-phase implementation cycle:
-
-*   **Data Ingestion & Synthesis:** Curated the TinyStories dataset for English and generated high-quality synthetic benchmarks for Hindi and Marathi using Groq, ensuring a balanced multilingual foundation.
-*   **Semantic Memory Construction:** Built the vector store using **FAISS** (`IndexFlatL2`) and implemented a custom chunking strategy to maintain narrative integrity across different scripts.
-*   **Intelligence Layer:** Developed the `WriterCritiqueAgent` with a zero-tolerance language-locking prompt architecture to ensure 100% native output for Indic languages.
-*   **Optimization:** Implemented a re-ranking layer that prioritizes "Strong" benchmarks even when "Moderate" results are semantically closer, ensuring a high-quality feedback loop.
-
----
-
-## 📂 Project Structure (Core Engine)
-
-```bash
-narrative-iq/
-├── api/
-│   └── main.py                 # FastAPI endpoints & Request Orchestration
-├── data/
-│   └── processed/              # FAISS Index, Metadata, & Analysis Database
-├── src/
-│   ├── agents/
-│   │   └── writer_critique_agent.py # Master AI reasoning & RAG coordination
-│   ├── rag/
-│   │   ├── embeddings.py       # E5 Vector generation pipeline
-│   │   ├── retriever.py        # Quality-aware search logic
-│   │   └── vector_store.py     # FAISS management
-│   ├── scoring/
-│   │   ├── weakness_scorer.py  # Multi-feature aggregation logic
-│   │   └── feedback_generator.py # Localized qualitative analysis
-│   ├── features/
-│   │   ├── pacing.py           # Rhythm & Variance analysis
-│   │   ├── repetition.py       # TTR & Vocabulary richness
-│   │   └── emotion.py          # Multilingual sentiment pipeline
-│   ├── pipelines/
-│   │   └── full_analysis_pipeline.py # Batch processing for intelligence DB
-│   └── utils/
-│       └── text_splitter.py    # Script-aware narrative chunking
-└── PROJECT_LOG.md              # Detailed engineering history
+```
+User Input (English / Hindi / Marathi)
+         |
+         v
+Paragraph Splitter (text_splitter.py)
+         |
+         v
+Feature Extraction
++------------------+------------------+------------------+
+| Pacing Analyzer  | Repetition Detector| Emotion Scorer  |
+| sentence length  | starters, words,  | Groq API for    |
+| + variance       | bigrams           | all 3 languages  |
++------------------+------------------+------------------+
+         |
+         v
+Weakness Scorer (language-aware weighted combination)
+Strong >= 0.60 | Moderate >= 0.40 | Weak < 0.40
+         |
+         v
+RAG Retrieval (FAISS top-50 -> Strong filter -> quality check)
+         |
+         v
+LLM Agent (Groq llama-3.3-70b-versatile)
+Comparative critique + Language-matched rewrite
+         |
+         v
+FastAPI Response / Streamlit UI
 ```
 
----
+## Tech Stack
 
-## 🚀 System Setup
+| Layer | Technology | Why |
+|---|---|---|
+| NLP Heuristics | Custom Python, nltk, regex | Explainable signals, consistent across runs |
+| Emotion Scoring | Groq API (llama-3.3-70b) | Understands literary subtext, not keyword matching |
+| Embeddings | intfloat/multilingual-e5-base | Single model for all 3 languages |
+| Vector Store | FAISS IndexFlatL2 | Exact search, no cloud dependency |
+| API Layer | FastAPI | Async, lightweight, easy to extend |
+| UI | Streamlit | Fast to build, sufficient for demo |
 
-### Backend & Engine
-1.  **Environment Preparation:**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Windows: .\venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
-2.  **Model Loading & Indexing:**
-    The system requires the FAISS index and analysis database to be present in `data/processed/`.
-3.  **API Execution:**
-    ```bash
-    uvicorn api.main:app --host 127.0.0.1 --port 8000
-    ```
+## Key Design Decisions
 
-### Tech Stack Highlights
-*   **Inference:** Groq (Llama 3.3 70B) for high-speed narrative reasoning.
-*   **Embeddings:** `multilingual-e5-base` for cross-language semantic bridge-building.
-*   **Vector DB:** FAISS (Facebook AI Similarity Search).
-*   **Language Support:** English (Standard), Hindi (Devanagari), Marathi (Devanagari).
+### Why custom heuristics instead of asking an LLM to score everything
 
----
+Heuristics give measurable explainable numbers. Pacing score comes from avg sentence length and variance. Repetition score from counter-based detection. These are defensible in an interview. LLM-only scoring is a black box with inconsistent outputs across runs.
 
-**Narrative-IQ** — *Advanced Multilingual Narrative Analysis*
+### Why Groq for emotion scoring instead of TextBlob
+
+TextBlob assigns polarity based on word lists. It does not understand literary language. Example: "She felt something loosen in her chest" scores near zero on TextBlob because none of those words are in its sentiment lexicon. Groq understands the literary meaning and scores it correctly.
+
+### Why language-aware weights in the scorer
+
+Hindi and Marathi literary prose uses more emotionally expressive language by default. Without adjusted weights, nearly all Hindi and Marathi paragraphs scored Strong on emotion even when pacing and repetition were weak. Separate weights: English pacing 0.40, Hindi/Marathi pacing 0.45.
+
+### Why two-stage benchmark retrieval
+
+Semantic similarity alone finds similar scenes but not necessarily strong writing. System retrieves top 50 semantically similar chunks then filters for Strong label, correct language, and passes a quality validation check. This ensures the benchmark is always better than the user input.
+
+### Why FAISS over a managed vector database
+
+The dataset is 2651 chunks. FAISS IndexFlatL2 gives exact search results with zero cloud dependency, no API costs, and fast local inference. A managed vector DB adds infrastructure complexity for no benefit at this scale.
+
+## Data Pipeline
+
+Run once to build the system. After the pipeline completes, the app loads the pre-built index and analysis database at startup.
+
+1. Download and generate raw stories
+```bash
+python -m src.ingestion.download_datasets
+```
+Downloads 500 English stories from HuggingFace TinyStories. Generates 50 Hindi and 40 Marathi stories via Groq API. Saves as .txt files in data/raw_stories/
+
+2. Chunk stories into paragraphs
+```bash
+python -m src.rag.chunking
+```
+Splits each story on double newlines. Creates 2654 chunks with chunk_id, text, language, word_count.
+
+3. Tag chunks with metadata
+```bash
+python -m src.ingestion.metadata_pipeline
+```
+Rule-based tagging for genre, scene_type, dialogue_density. No API calls. Keyword rules only. Runs in seconds.
+
+4. Generate embeddings
+```bash
+python -m src.rag.embeddings
+```
+Uses intfloat/multilingual-e5-base. Prepends "passage: " to each chunk (E5 model requirement). Saves to data/processed/embedded_chunks.pkl
+
+5. Build FAISS index
+```bash
+python -m src.rag.vector_store
+```
+Creates IndexFlatL2 from embeddings. Saves narrative_index.faiss and chunk_metadata.pkl
+
+6. Score all chunks
+```bash
+python -m src.pipelines.full_analysis_pipeline
+```
+Runs all chunks through pacing, repetition, emotion scoring. Labels each chunk Strong, Moderate, or Weak. Saves full_narrative_analysis.json. Agent uses this file to filter for Strong benchmark chunks.
+
+## Dataset Statistics
+
+| Language | Total Chunks | Strong | Moderate | Weak |
+|---|---|---|---|---|
+| English | 2408 | 672 | 1608 | 128 |
+| Hindi | 150 | 31 | 105 | 14 |
+| Marathi | 93 | 28 | 54 | 11 |
+| Total | 2651 | 731 | 1767 | 153 |
+
+## Setup and Running
+
+```bash
+# Create environment
+conda create -n narrativeiq_env python=3.11
+conda activate narrativeiq_env
+pip install -r requirements.txt
+python -m nltk.downloader punkt
+
+# Add API keys
+cp .env.example .env
+# Edit .env and add your Groq API keys
+
+# Build data pipeline (first time only, takes 20-30 minutes)
+python -m src.ingestion.download_datasets
+python -m src.rag.chunking
+python -m src.ingestion.metadata_pipeline
+python -m src.rag.embeddings
+python -m src.rag.vector_store
+python -m src.pipelines.full_analysis_pipeline
+
+# Run Streamlit UI
+streamlit run app.py
+
+# Or run FastAPI backend
+uvicorn api.main:app --reload --port 8000
+```
+
+## Project Structure
+
+```
+narrativeiq/
+├── api/
+│   └── main.py                         # FastAPI endpoints
+├── src/
+│   ├── agents/
+│   │   └── writer_critique_agent.py    # RAG + LLM orchestration
+│   ├── features/
+│   │   ├── pacing.py                   # Sentence length and variance
+│   │   ├── repetition.py               # Repeated words and bigrams
+│   │   └── emotion.py                  # Groq-based emotion scoring
+│   ├── ingestion/
+│   │   ├── download_datasets.py        # Data download and generation
+│   │   └── metadata_pipeline.py        # Rule-based chunk tagging
+│   ├── pipelines/
+│   │   └── full_analysis_pipeline.py   # Batch chunk scoring
+│   ├── rag/
+│   │   ├── chunking.py                 # Story to paragraph chunks
+│   │   ├── embeddings.py               # E5 embedding generation
+│   │   ├── retriever.py                # FAISS semantic search
+│   │   └── vector_store.py             # FAISS index management
+│   ├── scoring/
+│   │   ├── weakness_scorer.py          # Weighted score combination
+│   │   └── feedback_generator.py       # Scores to plain language tips
+│   └── utils/
+│       ├── text_splitter.py            # Chapter to paragraphs
+│       └── language_utils.py           # UI translation strings
+├── tests/
+│   └── test_pipeline.py                # End to end pipeline test
+├── docs/
+│   └── PROJECT_LOG.md                  # Full development log
+├── app.py                              # Streamlit UI
+├── requirements.txt
+└── .env.example
+```
+
+## Requirements
+
+See requirements.txt for full list.
+
+- groq
+- faiss-cpu
+- sentence-transformers
+- nltk
+- fastapi
+- uvicorn
+- streamlit
+- datasets
+- python-dotenv
